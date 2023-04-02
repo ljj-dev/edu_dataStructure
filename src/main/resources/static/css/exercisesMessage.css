@@ -1,0 +1,110 @@
+.append {
+    margin: 0px 20px;
+}
+
+.append ul {
+    display: flex;
+    align-items: center;
+}
+
+.append ul li {
+    margin-right: 20px;
+}
+
+.append .change {
+    margin-top: 20px;
+    padding: 20px 16px;
+    background-color: #E7F6F6;
+    border-radius: 4px;
+}
+
+.append .change .title {
+    padding-left: 6px;
+    color: #2f4f4f;
+}
+
+.append .change .title span:nth-child(1) {
+    margin-right: 6px;
+}
+
+.append .change .title .answer {
+    margin: 20px 0px 20px 8px;
+}
+
+.append .change .title .el-textarea {
+    width: 98% !important;
+}
+
+.append .change .options ul {
+    display: flex;
+    flex-direction: column;
+}
+
+.append .change .options ul li {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 98%;
+    margin: 10px 0px;
+}
+
+.append .change .options ul li span {
+    margin-right: 20px;
+}
+
+
+.append .change .submit {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.append .fill .fillAnswer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.append .fill .fillAnswer span {
+    margin-right: 6px;
+}
+
+.append .fill .fillAnswer .el-input {
+    width: 91% !important;
+}
+
+.append .fill .analysis {
+    margin-top: 20px;
+    margin-left: 5px;
+}
+
+.append .judge .judgeAnswer {
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+.append .w150 {
+    width: 150px;
+}
+
+.append li:nth-child(2) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.box {
+    padding: 0px 20px;
+}
+.box ul li {
+    margin: 10px 0px;
+    display: flex;
+    align-items: center;
+}
+.box ul li .el-input {
+    width: 6%;
+}
+.box ul li .w150 {
+    margin-left: 20px;
+    width: 7%;
+}

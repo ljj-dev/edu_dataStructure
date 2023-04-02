@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <script src="../js/jquery.js" charset="utf-8"></script>
+    <script src="../js/dist/js/bootstrap.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../js/dist/css/bootstrap.css"/>
+</head>
+<body>
+<section class="my-5 pt-5">
+    <div class="container" id="doProblem">
+        <div class="row mb-5">
+            <div class="col-sm-12">
+                <div class="jumbotron">
+                    <h3>{{ojProblem.problemId}}.{{ojProblem.title}}</h3> <h4>难度:{{ojProblem.level}}</h4>
+                    <pre>{{ojProblem.description}}</pre>
+                </div>
+                <label for="tc"></label><textarea id="tc" class="form-control" v-model="ojProblem.templateCode"
+                                                  rows="20"></textarea>
+                <button id="com" class="btn btn-primary" v-on:click="compile()">提交</button>
+                <button class="btn btn-primary" v-on:click="save()">保存</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<script>
+    let receive = window.opener["filter"];
+    //获取接收到的数据
+    let problemId = receive["id"];
+    let statusShow = receive["status"];
+    console.log(problemId)
+    console.log(statusShow)
+
+    let doProblem = new Vue({
+        el: '#doProblem',
+        data: {
+            ojProblem: {
+                problemId: '',
+                title: '',
+                level: '',
+                description: '',
+                templateCode: '',
+            }
+
+        },
+        mounted: function () {
+            this.getDetail(problemId,statusShow);
+        },
+        methods: {
+            getDetail(id, status) {
+                console.log(status)
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/queryProblemById?id=" + id+"&status="+status,
+                }).then(function (resp) {
+                    doProblem.ojProblem = resp.data.data;
+                });
+            },
+            compile() {
+                let question = {
+                    id: this.ojProblem.problemId,
+                    // 前面使用 v-model 进行了双向绑定. 当用户修改编辑框代码时,
+                    // templateCode 变量也会同步变化
+                    code: this.ojProblem.templateCode,
+                }
+                console.log(JSON.stringify(question));
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/doProblem",
+                    context: this,
+                    contentType: 'application/json; charset=UTF-8',
+                    data: JSON.stringify(question),
+                }).then(function (resp) {
+                    let msg = resp.data.ok + "\n"
+                    if (resp.data.reason) {
+                        msg += resp.data.reason;
+                    } else {
+                        msg += resp.data.stdout;
+                    }
+                    alert(msg);
+                });
+            },
+            save(){
+                let answer = {
+                    id: this.ojProblem.problemId,
+                    code: this.ojProblem.templateCode,
+                }
+                var _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/saveMyAnswer",
+                    context: this,
+                    contentType: 'application/json; charset=UTF-8',
+                    data: JSON.stringify(answer),
+                }).then(function (resp) {
+                    //判断响应数据是否为success
+                    if (resp.data == "success") {
+                        _this.getDetail();
+                        //保存成功提示
+                        _this.$message({
+                            message: '恭喜你，保存成功',
+                            type: 'success'
+                        });
+                    } else {
+                        _this.getDetail();
+                        _this.$message({
+                            message: '保存失败',
+                            type: 'warning'
+                        });
+                    }
+                });
+            },
+        },
+
+
+    })
+</script>
+</body>
+</html>

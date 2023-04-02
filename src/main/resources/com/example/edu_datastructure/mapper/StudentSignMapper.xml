@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.StudentSignMapper">
+    <resultMap id="signMap" type="com.example.edu_datastructure.pojo.StudentSign">
+        <result property="studentId" column="student_id"/>
+        <result property="cumulativeDays" column="cumulative_days"/>
+        <result property="lastSign" column="last_sign"/>
+        <result property="runningDays" column="running_days"/>
+        <result property="signNums" column="sign_nums"/>
+    </resultMap>
+    <insert id="insertNewSign">
+        insert into student_sign
+        values (null, #{studentSign.studentId}, #{studentSign.cumulativeDays}, #{studentSign.runningDays}, null,
+                #{studentSign.signNums})
+    </insert>
+    <update id="updateSignInfo">
+        update student_sign
+        <set>
+            <if test="studentSign.cumulativeDays != null">
+                cumulative_days = #{studentSign.cumulativeDays},
+            </if>
+            <if test="studentSign.runningDays != null">
+                running_days = #{studentSign.runningDays},
+            </if>
+            <if test="studentSign.lastSign != null and studentSign.lastSign !=''">
+                last_sign = #{studentSign.lastSign},
+            </if>
+        </set>
+        WHERE
+        student_id = #{studentSign.studentId}
+    </update>
+
+    <select id="querySignById" resultMap="signMap">
+        SELECT cumulative_days,
+               running_days,
+               last_sign,
+               sign_nums
+        FROM student_sign
+        WHERE student_id = #{studentId}
+    </select>
+
+</mapper>

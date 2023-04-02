@@ -1,0 +1,28 @@
+.homeWrap {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow-y: hidden;
+}
+.el-menu {
+    min-width: 1200px;
+}
+#el-menu-item-placeholder1 {
+    width: 22%;
+    max-width: 22%;
+    cursor: default;
+}
+/* logo */
+.logo{
+    color: #1b5cf1;
+    text-align: center;
+    font-size: 26px;
+    line-height: 50px;
+    padding: 0 15px;
+    font-weight: 400;
+    text-decoration: none;
+}
+.el-dropdown-link {
+    cursor: pointer;
+    color: white;
+}

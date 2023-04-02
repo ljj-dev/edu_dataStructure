@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../css/algorithmAnimation.css"/>
+</head>
+<body>
+<div id="algorithmAnimation">
+    <div class="homeWrap">
+        <el-container>
+            <el-header></el-header>
+            <el-container>
+                <el-aside width="310px">
+                    <el-menu
+                            default-active="1"
+                            class="el-menu-vertical-demo"
+                            active-text-color="#ffd04b">
+                        <el-menu-item index="1">
+                            <i class="el-icon-crop"></i>
+                            <span @click="linearList()">线性表</span>
+                        </el-menu-item>
+                        <el-menu-item index="2">
+                            <i class="el-icon-crop"></i>
+                            <span @click="stackAndQueue()">栈与队列</span>
+                        </el-menu-item>
+                        <el-menu-item index="3">
+                            <i class="el-icon-cherry"></i>
+                            <span @click="tree()">树</span>
+                        </el-menu-item>
+                        <el-menu-item index="4">
+                            <i class="el-icon-crop"></i>
+                            <span @click="graph()">图</span>
+                        </el-menu-item>
+                        <el-menu-item index="5">
+                            <i class="el-icon-s-data"></i>
+                            <span @click="sort()">排序算法</span>
+                        </el-menu-item>
+                        <el-menu-item index="6">
+                            <i class="el-icon-crop"></i>
+                            <span @click="search()">查找</span>
+                        </el-menu-item>
+                    </el-menu>
+                </el-aside>
+
+
+                <el-main style="overflow: hidden">
+                    <!-- 内容主体区域 -->
+                    <iframe :src="animationUrl" name="mainBody" style="width: 100%;height: 100%;"></iframe>
+                </el-main>
+            </el-container>
+        </el-container>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#algorithmAnimation',
+        data() {
+            return {
+                animationUrl: 'linearListAnimation.html',
+            };
+        },
+        methods: {
+            sort() {
+                this.animationUrl = "sortAnimation.html";
+            },
+            tree() {
+                this.animationUrl = "treeAnimation.html";
+            },
+            graph(){
+                this.animationUrl = "graphAnimation.html";
+            },
+            linearList() {
+                this.animationUrl = "linearListAnimation.html";
+            },
+            stackAndQueue(){
+                this.animationUrl = "stackAndQueueAnimation.html";
+            },
+            search(){
+                this.animationUrl = "searchAnimation.html";
+            }
+        }
+    })
+</script>
+</body>
+</html>

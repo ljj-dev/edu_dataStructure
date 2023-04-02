@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.OjProblemMapper">
+    <resultMap id="OjProblemMap" type="com.example.edu_datastructure.pojo.OjProblem">
+    <result property="problemId" column="problem_id"/>
+    <result property="templateCode" column="template_code"/>
+    <result property="testCode" column="test_code"/>
+    <result property="description" column="description"/>
+    <result property="level" column="level"/>
+    <result property="title" column="title"/>
+    </resultMap>
+
+    <select id="queryAllOjProblem" resultMap="OjProblemMap">
+        SELECT problem_id,
+               title,
+               `level`,
+               description,
+               template_code,
+               test_code
+        FROM oj_problem limit #{begin}
+               , #{pageSize}
+    </select>
+    <select id="allOjProblemCount" resultType="java.lang.Integer">
+        SELECT count(problem_id)
+        FROM oj_problem
+    </select>
+    <select id="queryProblemById" resultMap="OjProblemMap">
+        SELECT problem_id,
+               title,
+               `level`,
+               description,
+               template_code,
+               test_code
+        FROM oj_problem
+        WHERE problem_id = #{problemId}
+    </select>
+</mapper>

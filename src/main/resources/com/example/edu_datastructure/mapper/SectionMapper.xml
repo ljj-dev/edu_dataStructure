@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.SectionMapper">
+    <resultMap id="SectionMap" type="com.example.edu_datastructure.pojo.Section">
+        <result property="sectionId" column="section_id"/>
+        <result property="sectionUrl" column="section_url"/>
+        <result property="sectionName" column="section_name"/>
+    </resultMap>
+    <insert id="addSection">
+        insert into section
+        values (null, #{sectionInfo.sectionId}, #{sectionInfo.sectionName}, #{sectionInfo.sectionUrl},
+                #{sectionInfo.chapterId}, 0)
+    </insert>
+
+    <select id="querySectionById" resultMap="SectionMap">
+        SELECT section_id,
+               section_name,
+               section_url
+        FROM section
+        WHERE chapter_id = #{chapterId}
+          and isDelete = 0
+    </select>
+</mapper>

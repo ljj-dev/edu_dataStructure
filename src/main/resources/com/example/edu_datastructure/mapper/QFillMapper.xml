@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.QFillMapper">
+    <resultMap id="QFillMap" type="com.example.edu_datastructure.pojo.QFill">
+        <id property="questionId" column="question_id"/>
+        <result property="question" column="question"/>
+        <result property="answer" column="answer"/>
+        <result property="analysis" column="analysis"/>
+        <result property="score" column="score"/>
+        <result property="chapterId" column="chapter_id"/>
+        <result property="difficultyLevel" column="difficulty_level"/>
+    </resultMap>
+    <insert id="addFill">
+        insert into q_fill
+        values (null, #{qFill.question}, #{qFill.answer}, #{qFill.analysis}, #{qFill.score},
+                #{qFill.chapterId}, #{qFill.difficultyLevel}, 0)
+    </insert>
+    <update id="deleteFillById">
+        update q_fill
+        set isDelete = 1
+        where question_id = #{questionId}
+    </update>
+    <update id="updateFillById">
+        update q_fill
+        <set>
+            <if test="qFill.question != null and qFill.question !=''">
+                question = #{qFill.question},
+            </if>
+            <if test="qFill.answer != null and qFill.answer !=''">
+                answer = #{qFill.answer},
+            </if>
+            <if test="qFill.analysis != null and qFill.analysis !=''">
+                analysis = #{qFill.analysis},
+            </if>
+            <if test="qFill.score != null">
+                score = #{qFill.score},
+            </if>
+            <if test="qFill.chapterId != null">
+                chapter_id = #{qFill.chapterId},
+            </if>
+            <if test="qFill.difficultyLevel != null">
+                difficulty_level = #{qFill.difficultyLevel},
+            </if>
+        </set>
+        where question_id = #{questionId}
+        and isDelete = 0
+    </update>
+    <select id="queryAllFill" resultMap="QFillMap">
+        select *
+        from q_fill
+        where isDelete = 0 limit #{begin}
+            , #{pageSize}
+    </select>
+    <select id="queryFillById" resultMap="QFillMap">
+        select *
+        from q_fill
+        where question_id = #{questionId}
+          and isDelete = 0
+    </select>
+    <select id="allFillCount" resultType="java.lang.Integer">
+        select count(question_id)
+        from q_fill
+        where isDelete = 0
+    </select>
+    <select id="queryByRandom" resultType="java.lang.Integer">
+        SELECT
+            question_id
+        FROM
+            q_fill
+        ORDER BY
+            rand() DESC
+            LIMIT #{fillNumber}
+    </select>
+    <select id="queryPaperByIdAndType" resultMap="QFillMap">
+        SELECT
+            *
+        FROM
+            q_fill
+        WHERE
+                question_id IN (
+                SELECT
+                    question_id
+                FROM
+                    paper_manage
+                WHERE
+                    question_type = 3
+                  AND paper_id = #{paperId})
+    </select>
+
+</mapper>

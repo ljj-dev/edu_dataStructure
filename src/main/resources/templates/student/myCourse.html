@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/pdfobject.min.js" type="text/javascript"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../css/myCourse.css"/>
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-header></el-header>
+        <el-container>
+            <el-aside width="310px">
+                <h5>目录</h5>
+                <el-menu
+                        default-active="1"
+                        @open="handleOpen"
+                        @close="handleClose"
+                        class="el-menu-vertical-demo"
+                        active-text-color="#ffd04b">
+                    <div v-for="item in chapterData" :key="item.chapterId">
+                        <el-submenu :index="item.chapterId">
+                            <template slot="title">
+                                <span>{{item.chapterName}}</span>
+                            </template>
+                            <el-menu-item-group>
+                                <el-menu-item :index="sub.sectionId" v-for="sub in item.sectionList"
+                                              :key="sub.sectionId" @click="clickMen(sub.sectionUrl)">{{sub.sectionName}}
+                                </el-menu-item>
+                            </el-menu-item-group>
+                        </el-submenu>
+                    </div>
+                </el-menu>
+            </el-aside>
+
+
+            <el-main style="background-color: #504e4e">
+                <!-- 第1步：创建嵌入PDF的容器 -->
+                <div id="pdf" style=""></div>
+            </el-main>
+        </el-container>
+    </el-container>
+
+</div>
+
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                //文件名
+                sectionUrl: '1.1 什么是数据结构.pdf',
+                //章节数据
+                chapterData: [],
+            }
+        },
+        methods: {
+            viewPdf() {
+                var _this = this;
+                //发送ajax请求
+                axios.post("http://localhost:8080/student/queryAllCourse").then((resp) => {
+                    _this.chapterData = resp.data.data;
+                });
+
+            },
+            clickMen(sectionUrl) {
+                if (sectionUrl != null) {
+                    this.sectionUrl = sectionUrl;
+                }
+                <!-- 第2步：告诉PDFObject，插入的PDF文件路径，以及插入到哪个容器 -->
+                let pathUrl = "../data/pdfs/" + this.sectionUrl;
+                PDFObject.embed(pathUrl, "#pdf");
+            },
+            handleOpen(key, keyPath) {
+                console.log(key, keyPath);
+            },
+            handleClose(key, keyPath) {
+                console.log(key, keyPath);
+            }
+
+        },
+        mounted() {
+            this.viewPdf();
+            this.clickMen();
+        }
+    })
+</script>
+<!-- 第3步：可以选择使用CSS来指定视觉样式，包括维度、边框、边距等 -->
+<style>
+    .pdfobject-container {
+        height: 600px;
+        width: 900px;
+    }
+
+    .pdfobject {
+        border: 1px solid #ccc;
+    }
+</style>
+
+</body>
+</html>

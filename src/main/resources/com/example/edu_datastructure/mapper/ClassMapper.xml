@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.ClassMapper">
+    <resultMap id="classResultMap" type="com.example.edu_datastructure.pojo.Class">
+        <result property="classId" column="class_id"/>
+        <result property="number" column="number"/>
+    </resultMap>
+    <insert id="addClass">
+        insert into class
+        values (null, #{addClassInfo.classId}, 0, 0)
+    </insert>
+    <update id="updateNumber">
+        UPDATE class
+        SET number = (SELECT count(student_id)
+                      FROM student
+                      WHERE class_id = #{classId})
+        WHERE class_id = #{classId}
+    </update>
+    <update id="deleteClassById">
+        UPDATE class
+        SET isDelete = 1
+        WHERE class_id = #{classId}
+    </update>
+    <update id="deleteByClassIds">
+        UPDATE class
+        SET isDelete = 1
+        where class_id in
+        <foreach collection="selectedIds" item="id" separator="," open="(" close=")">
+            #{selectedIds}
+        </foreach>
+    </update>
+    <select id="queryAllClass" resultMap="classResultMap">
+        SELECT class_id,
+               number
+        FROM class
+        WHERE isDelete = 0
+    </select>
+    <select id="queryAllClassPage" resultMap="classResultMap">
+        SELECT class_id,
+               number
+        FROM class
+        WHERE isDelete = 0
+            LIMIT #{begin}
+            , #{pageSize}
+
+    </select>
+    <select id="allClassCount" resultType="java.lang.Integer">
+        SELECT count(class_id)
+        FROM class
+        WHERE isDelete = 0
+    </select>
+</mapper>

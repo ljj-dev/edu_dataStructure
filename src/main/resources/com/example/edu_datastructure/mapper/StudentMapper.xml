@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.StudentMapper">
+    <resultMap id="studentResultMap" type="com.example.edu_datastructure.pojo.Student">
+        <result property="studentId" column="student_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="studentSex" column="student_sex"/>
+        <result property="studentGrade" column="student_grade"/>
+        <result property="classId" column="class_id"/>
+    </resultMap>
+    <update id="updateMyInfo">
+        UPDATE student
+        <set>
+            <if test="student.studentSex != null and student.studentSex !=''">
+                student_sex = #{student.studentSex},
+            </if>
+            <if test="student.studentGrade != null and student.studentGrade !=''">
+                student_grade = #{student.studentGrade},
+            </if>
+            <if test="student.studentName != null and student.studentName !=''">
+                student_name = #{student.studentName},
+            </if>
+        </set>
+        WHERE
+        student_id = #{student.studentId}
+    </update>
+    <update id="updateMyClass">
+        UPDATE student
+        set class_id = #{classId}
+        WHERE student_id = #{studentId}
+    </update>
+    <update id="updateStudentById">
+        UPDATE student
+        <set>
+            <if test="infoForm.studentSex != null and infoForm.studentSex !=''">
+                student_sex = #{infoForm.studentSex},
+            </if>
+            <if test="infoForm.studentGrade != null and infoForm.studentGrade !=''">
+                student_grade = #{infoForm.studentGrade},
+            </if>
+            <if test="infoForm.studentName != null and infoForm.studentName !=''">
+                student_name = #{infoForm.studentName},
+            </if>
+            <if test="infoForm.studentId != null and infoForm.studentId !=''">
+                student_name = #{infoForm.studentId},
+            </if>
+        </set>
+        WHERE
+        student_id = #{studentId}
+    </update>
+    <update id="deleteStudentById">
+        UPDATE student
+        set isDelete = 1
+        WHERE student_id = #{studentId}
+    </update>
+    <select id="queryStudentById" resultMap="studentResultMap">
+        SELECT student_id,
+               student_name,
+               student_sex,
+               student_grade,
+               class_id
+        FROM student
+        WHERE student_id = #{studentId}
+    </select>
+    <select id="countClassById" resultType="java.lang.Integer">
+        SELECT count(student_id)
+        FROM student
+        WHERE class_id = #{classId}
+    </select>
+    <select id="queryStudentByClassId" resultMap="studentResultMap">
+        SELECT student_id,
+               student_name,
+               student_sex,
+               student_grade
+        FROM student
+        WHERE class_id = #{classId}
+    </select>
+    <select id="queryAllStudent" resultMap="studentResultMap">
+        SELECT student_id,
+               student_name,
+               student_sex,
+               student_grade,
+               class_id
+        FROM student
+        WHERE isDelete = 0
+            LIMIT #{begin}
+            , #{pageSize}
+    </select>
+    <select id="allClassCount" resultType="java.lang.Integer">
+        SELECT count(student_id)
+        FROM student
+        WHERE isDelete = 0
+    </select>
+
+
+</mapper>

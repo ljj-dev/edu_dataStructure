@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../css/exercisesMessage.css"/>
+</head>
+<body>
+
+<div id="exercisesMessage">
+    <template>
+        <el-breadcrumb separator-class="el-icon-arrow-right">
+            <el-breadcrumb-item><a href="teacherMain.html" target="mainBody">首页</a></el-breadcrumb-item>
+            <el-breadcrumb-item>基础信息管理</el-breadcrumb-item>
+            <el-breadcrumb-item>习题管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </template>
+    <el-divider></el-divider>
+    <template>
+        <el-tabs v-model="activeName">
+            <el-tab-pane name="first">
+                <span slot="label" @click="queryMultiple()">题目</span>
+                <el-button type="primary" round size="small" @click="queryMultiple()">选择题</el-button>
+                <el-button type="primary" round size="small" @click="queryJudgment()">判断题</el-button>
+                <el-button type="primary" round size="small" @click="queryFill()">填空题</el-button>
+                <template>
+                    <el-table
+                            :data="tableData"
+                            style="width: 100%"
+                            :row-class-name="tableRowClassName"
+                            @selection-change="handleSelectionChange">
+                        <el-table-column
+                                type="selection"
+                                width="55">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                type="index"
+                                fixed
+                                label="序号">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                prop="questionId"
+                                label="题目编号">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                prop="question"
+                                label="题目">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                v-if="statusShow"
+                                prop="answerA"
+                                label="选项A">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                v-if="statusShow"
+                                prop="answerB"
+                                label="选项B">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                v-if="statusShow"
+                                prop="answerC"
+                                label="选项C">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                v-if="statusShow"
+                                prop="answerD"
+                                label="选项D">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                prop="answer"
+                                label="答案">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                prop="analysis"
+                                label="分析">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                prop="score"
+                                label="分数">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                prop="chapterId"
+                                label="所属章节">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                prop="difficultyLevel"
+                                label="难度">
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                label="操作"
+                                fixed="right"
+                                width="200">
+                            <template slot-scope="scope">
+                                <el-button type="primary" round
+                                           @click="updateQuestionById(scope.row)" size="small">
+                                    编辑
+                                </el-button>
+                                <el-button type="danger" round
+                                           @click="deleteQuestionById(scope.row)" size="small">
+                                    删除
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </template>
+                <!--    分页-->
+                <template>
+                    <div class="block" style="position: center;">
+                        <el-pagination
+                                @size-change="handleSizeChange"
+                                @current-change="handleCurrentChange"
+                                :current-page="currentPage"
+                                :page-sizes="[2, 4, 6, 8]"
+                                :page-size="100"
+                                layout="total, sizes, prev, pager, next, jumper"
+                                :total="totalCount">
+                        </el-pagination>
+                    </div>
+                </template>
+            </el-tab-pane>
+            <el-tab-pane name="second">
+                <span slot="label">添加题目</span>
+                <section class="append">
+                    <ul>
+                        <li>
+                            <span>题目类型:</span>
+                            <el-select v-model="optionValue" placeholder="请选择题型" class="w150">
+                                <el-option
+                                        v-for="item in options"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </li>
+
+                        <li v-if="optionValue == '选择题'">
+                            <span>所属章节：</span>
+                            <el-input
+                                    placeholder="请输入对应章节"
+                                    v-model="postMultiple.chapterId"
+                                    class="w150"
+                                    clearable>
+                            </el-input>
+                        </li>
+                        <li v-if="optionValue == '填空题'">
+                            <span>所属章节：</span>
+                            <el-input
+                                    placeholder="请输入对应章节"
+                                    v-model="postFill.chapterId"
+                                    class="w150"
+                                    clearable>
+                            </el-input>
+                        </li>
+                        <li v-if="optionValue == '判断题'">
+                            <span>所属章节：</span>
+                            <el-input
+                                    placeholder="请输入对应章节"
+                                    v-model="postJudge.chapterId"
+                                    class="w150"
+                                    clearable>
+                            </el-input>
+                        </li>
+                        <li v-if="optionValue == '选择题'">
+                            <span>难度等级:</span>
+                            <el-select v-model="postMultiple.difficultyLevel" placeholder="选择难度等级" class="w150">
+                                <el-option
+                                        v-for="item in levels"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </li>
+                        <li v-if="optionValue == '填空题'">
+                            <span>难度等级:</span>
+                            <el-select v-model="postFill.difficultyLevel" placeholder="选择难度等级" class="w150">
+                                <el-option
+                                        v-for="item in levels"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </li>
+                        <li v-if="optionValue == '判断题'">
+                            <span>难度等级:</span>
+                            <el-select v-model="postJudge.difficultyLevel" placeholder="选择难度等级" class="w150">
+                                <el-option
+                                        v-for="item in levels"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </li>
+                        <li v-if="optionValue == '选择题'">
+                            <span>分数:</span>
+                            <el-select v-model="postMultiple.score" placeholder="选择分数" class="w150">
+                                <el-option
+                                        v-for="item in scores"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </li>
+                        <li v-if="optionValue == '填空题'">
+                            <span>分数:</span>
+                            <el-select v-model="postFill.score" placeholder="选择分数" class="w150">
+                                <el-option
+                                        v-for="item in scores"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </li>
+                        <li v-if="optionValue == '判断题'">
+                            <span>分数:</span>
+                            <el-select v-model="postJudge.score" placeholder="选择分数" class="w150">
+                                <el-option
+                                        v-for="item in scores"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </li>
+                        <li v-if="optionValue == '选择题'">
+                            <span>正确选项:</span>
+                            <el-select v-model="postMultiple.answer" placeholder="选择正确答案" class="w150">
+                                <el-option
+                                        v-for="item in rights"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </li>
+                    </ul>
+                    <!-- 选择题部分 -->
+                    <div class="change" v-if="optionValue == '选择题'">
+                        <div class="title">
+                            <el-tag>题目:</el-tag>
+                            <span>在下面的输入框中输入题目</span>
+                            <el-input
+                                    type="textarea"
+                                    rows="4"
+                                    v-model="postMultiple.question"
+                                    placeholder="请输入题目内容"
+                                    resize="none"
+                                    class="answer">
+                            </el-input>
+                        </div>
+                        <div class="options">
+                            <ul>
+                                <li>
+                                    <el-tag type="success">A</el-tag>
+                                    <el-input
+                                            placeholder="请输入选项A的内容"
+                                            v-model="postMultiple.answerA"
+                                            clearable="">
+                                    </el-input>
+                                </li>
+                                <li>
+                                    <el-tag type="success">B</el-tag>
+                                    <el-input
+                                            placeholder="请输入选项B的内容"
+                                            v-model="postMultiple.answerB"
+                                            clearable="">
+                                    </el-input>
+                                </li>
+                                <li>
+                                    <el-tag type="success">C</el-tag>
+                                    <el-input
+                                            placeholder="请输入选项C的内容"
+                                            v-model="postMultiple.answerC"
+                                            clearable="">
+                                    </el-input>
+                                </li>
+                                <li>
+                                    <el-tag type="success">D</el-tag>
+                                    <el-input
+                                            placeholder="请输入选项D的内容"
+                                            v-model="postMultiple.answerD"
+                                            clearable="">
+                                    </el-input>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="title">
+                            <el-tag>解析:</el-tag>
+                            <span>在下面的输入框中输入题目解析</span>
+                            <el-input
+                                    type="textarea"
+                                    rows="4"
+                                    v-model="postMultiple.analysis"
+                                    placeholder="请输入答案解析"
+                                    resize="none"
+                                    class="answer">
+                            </el-input>
+                        </div>
+                        <div class="submit">
+                            <el-button type="primary" @click="multipleSubmit()">立即添加</el-button>
+                        </div>
+                    </div>
+                    <!-- 填空题部分 -->
+                    <div class="change fill" v-if="optionValue == '填空题'">
+                        <div class="title">
+                            <el-tag>题目:</el-tag>
+                            <span>输入题目。注意需要考生答题部分一定要用括号（英文半角）括起来。</span>
+                            <el-input
+                                    type="textarea"
+                                    rows="4"
+                                    v-model="postFill.question"
+                                    placeholder="请输入题目内容"
+                                    resize="none"
+                                    class="answer">
+                            </el-input>
+                        </div>
+                        <div class="fillAnswer">
+                            <el-tag>正确答案:</el-tag>
+                            <el-input v-model="postFill.answer"></el-input>
+                        </div>
+                        <div class="title analysis">
+                            <el-tag type="success">解析:</el-tag>
+                            <span>下方输入框中输入答案解析</span>
+                            <el-input
+                                    type="textarea"
+                                    rows="4"
+                                    v-model="postFill.analysis"
+                                    placeholder="请输入答案解析"
+                                    resize="none"
+                                    class="answer">
+                            </el-input>
+                        </div>
+                        <div class="submit">
+                            <el-button type="primary" @click="fillSubmit()">立即添加</el-button>
+                        </div>
+                    </div>
+                    <!-- 判断题 -->
+                    <div class="change judge" v-if="optionValue == '判断题'">
+                        <div class="title">
+                            <el-tag>题目:</el-tag>
+                            <span>在下面的输入框中输入题目</span>
+                            <el-input
+                                    type="textarea"
+                                    rows="4"
+                                    v-model="postJudge.question"
+                                    placeholder="请输入题目内容"
+                                    resize="none"
+                                    class="answer">
+                            </el-input>
+                        </div>
+                        <div class="judgeAnswer">
+                            <el-radio v-model="postJudge.answer" label="T">正确</el-radio>
+                            <el-radio v-model="postJudge.answer" label="F">错误</el-radio>
+                        </div>
+                        <div class="title">
+                            <el-tag>解析:</el-tag>
+                            <span>在下面的输入框中输入题目解析</span>
+                            <el-input
+                                    type="textarea"
+                                    rows="4"
+                                    v-model="postJudge.analysis"
+                                    placeholder="请输入答案解析"
+                                    resize="none"
+                                    class="answer">
+                            </el-input>
+                        </div>
+                        <div class="submit">
+                            <el-button type="primary" @click="judgeSubmit()">立即添加</el-button>
+                        </div>
+                    </div>
+                </section>
+            </el-tab-pane>
+        </el-tabs>
+    </template>
+
+
+    <!--    编辑题目-->
+    <template>
+        <el-dialog title="题目信息" :visible.sync="dialogQuestionById">
+            <el-form :model="topicStructure">
+                <el-form-item label="题目编号" :label-width="formLabelWidth">
+                    <el-input v-model="topicStructure.questionId" autocomplete="off" readonly="readonly"></el-input>
+                </el-form-item>
+                <el-form-item label="题目" :label-width="formLabelWidth">
+                    <el-input v-model="topicStructure.question" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="选项A" :label-width="formLabelWidth" v-if="statusShow">
+                    <el-input v-model="topicStructure.answerA" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="选项B" :label-width="formLabelWidth" v-if="statusShow">
+                    <el-input v-model="topicStructure.answerB" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="选项C" :label-width="formLabelWidth" v-if="statusShow">
+                    <el-input v-model="topicStructure.answerC" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="选项D" :label-width="formLabelWidth" v-if="statusShow">
+                    <el-input v-model="topicStructure.answerD" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="答案" :label-width="formLabelWidth">
+                    <el-input v-model="topicStructure.answer" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="分析" :label-width="formLabelWidth">
+                    <el-input v-model="topicStructure.analysis" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="分数" :label-width="formLabelWidth">
+                    <el-input v-model="topicStructure.score" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="所属章节" :label-width="formLabelWidth">
+                    <el-input v-model="topicStructure.chapterId" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="难度" :label-width="formLabelWidth">
+                    <el-input v-model="topicStructure.difficultyLevel" autocomplete="off"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogQuestionById = false">取 消</el-button>
+                <el-button type="primary" @click="changeQuestionInfo()">修改信息</el-button>
+            </div>
+        </el-dialog>
+    </template>
+
+</div>
+
+<script>
+    new Vue({
+        el: '#exercisesMessage',
+        data() {
+            return {
+                activeName: 'first',
+                tableData: [],
+                //被选中的id数组
+                selectedIds: [],
+                multipleSelection: [],
+                //分页查询 总数
+                totalCount: 50,
+                //每页显示的条数
+                pageSize: 15,
+                //当前的页码
+                currentPage: 1,
+
+                statusShow: false,
+
+                questionType: 1,    //1选择题， 2判断题， 3填空题
+                optionValue: '选择题', //题型选中值
+                options: [ //题库类型
+                    {
+                        value: '选择题',
+                        label: '选择题',
+                    },
+                    {
+                        value: '填空题',
+                        label: '填空题',
+                    },
+                    {
+                        value: '判断题',
+                        label: '判断题',
+                    },
+                ],
+                topicStructure: {
+                    questionId: '',
+                    question: '',
+                    answerA: '',
+                    answerB: '',
+                    answerC: '',
+                    answerD: '',
+                    answer: '',
+                    analysis: '',
+                    score: '',
+                    chapterId: '',
+                    difficultyLevel: '',
+                },
+                dialogQuestionById: false,
+                formLabelWidth: '100px',
+
+                postMultiple: { //选择题提交内容
+                    subject: '', //试卷名称
+                    difficultyLevel: '', //难度等级选中值
+                    answer: '', //正确答案选中值
+                    chapterId: '', //对应章节
+                    question: '', //题目
+                    analysis: '', //解析
+                    answerA: '',
+                    answerB: '',
+                    answerC: '',
+                    answerD: '',
+                    score: '',
+                },
+                postFill: { //填空题提交内容
+                    subject: '', //试卷名称
+                    difficultyLevel: '', //难度等级选中值
+                    answer: '', //正确答案
+                    chapterId: '', //对应章节
+                    question: '', //题目
+                    analysis: '', //解析
+                    score: '', //分数
+                },
+                postJudge: { //判断题提交内容
+                    subject: '', //试卷名称
+                    difficultyLevel: '', //难度等级选中值
+                    answer: '', //正确答案
+                    chapterId: '', //对应章节
+                    question: '', //题目
+                    analysis: '', //解析
+                    score: '', //分数
+                },
+                levels: [ //难度等级
+                    {
+                        value: '1',
+                        label: '1'
+                    },
+                    {
+                        value: '2',
+                        label: '2'
+                    },
+                    {
+                        value: '3',
+                        label: '3'
+                    },
+                    {
+                        value: '4',
+                        label: '4'
+                    },
+                    {
+                        value: '5',
+                        label: '5'
+                    },
+                ],
+                scores: [ //分数
+                    {
+                        value: '1',
+                        label: '1'
+                    },
+                    {
+                        value: '2',
+                        label: '2'
+                    },
+                    {
+                        value: '3',
+                        label: '3'
+                    },
+                    {
+                        value: '4',
+                        label: '4'
+                    },
+                    {
+                        value: '5',
+                        label: '5'
+                    },
+                ],
+                rights: [ //正确答案
+                    {
+                        value: 'A',
+                        label: 'A'
+                    },
+                    {
+                        value: 'B',
+                        label: 'B'
+                    },
+                    {
+                        value: 'C',
+                        label: 'C'
+                    },
+                    {
+                        value: 'D',
+                        label: 'D'
+                    },
+                ],
+            };
+        },
+        methods: {
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex === 1) {
+                    return 'warning-row';
+                } else if (rowIndex === 3) {
+                    return 'success-row';
+                }
+                return '';
+            },
+            //复选框选中后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                console.log(this.multipleSelection)
+            },
+
+            //分页相关函数
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                //重新设置每页的条数
+                this.pageSize = val;
+                this.queryQuestion();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                //重新设置当前页码
+                this.currentPage = val;
+                this.queryQuestion();
+            },
+
+            //查询所有选择题
+            queryMultiple() {
+                this.questionType = 1;
+                this.statusShow = true;
+                this.queryQuestion();
+            },
+
+            //查询所有填空题
+            queryFill() {
+                this.questionType = 2;
+                this.statusShow = false;
+                this.queryQuestion();
+            },
+
+            //查询所有判断题
+            queryJudgment() {
+                this.questionType = 3;
+                this.statusShow = false;
+                this.queryQuestion();
+            },
+
+            //查询题目
+            queryQuestion() {
+                //分页查询  查询一页的数据
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/question/queryQuestion?questionType=" + _this.questionType + "&currentPage=" + _this.currentPage + "&pageSize=" + _this.pageSize,
+                }).then(function (resp) {
+                    //获取每一页的数据
+                    _this.tableData = resp.data.data.rows;
+
+                    //设置总记录数
+                    _this.totalCount = resp.data.data.totalCount;
+                    // console.log(_this.tableData);
+                });
+            },
+
+            //编辑题目
+            updateQuestionById(row) {
+                console.log(row.questionId);
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/question/queryQuestionById?questionType=" + _this.questionType + "&questionId=" + row.questionId,
+                }).then(function (resp) {
+                    _this.topicStructure = resp.data.data;
+                    _this.dialogQuestionById = true;
+                });
+            },
+            changeQuestionInfo() {
+                this.$confirm('确定修改题目信息', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/question/updateQuestionById?questionType=" + _this.questionType,
+                        data: _this.topicStructure,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.$message({
+                                type: 'success',
+                                message: '修改成功!'
+                            });
+                        } else {
+                            _this.$message({
+                                type: 'warning',
+                                message: '修改失败!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+            //删除题目
+            deleteQuestionById(row) {
+                this.$confirm('确定删除', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    //页面加载完成之后，发送Ajax请求
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/question/deleteQuestionById?questionType=" + _this.questionType + "&questionId=" + row.questionId,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.queryQuestion();
+                            _this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+
+            //添加选择题
+            multipleSubmit() {
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/question/addMultiple",
+                    data: _this.postMultiple,
+                }).then(function (resp) {
+                    if (resp.data == "success") {
+                        _this.$message({
+                            type: 'success',
+                            message: '添加成功!'
+                        });
+                        this.postMultiple = {}
+                    }
+                });
+            },
+
+            //添加填空题
+            fillSubmit() {
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/question/addFill",
+                    data: _this.postFill,
+                }).then(function (resp) {
+                    if (resp.data == "success") {
+                        _this.$message({
+                            type: 'success',
+                            message: '添加成功!'
+                        });
+                        this.postFill = {}
+                    }
+                });
+            },
+
+            //添加判断题
+            judgeSubmit() {
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/question/addJudge",
+                    data: _this.postJudge,
+                }).then(function (resp) {
+                    if (resp.data == "success") {
+                        _this.$message({
+                            type: 'success',
+                            message: '添加成功!'
+                        });
+                        this.postJudge = {}
+                    }
+                });
+            },
+        },
+        mounted() {
+            this.queryMultiple();
+        }
+
+    })
+</script>
+</body>
+</html>

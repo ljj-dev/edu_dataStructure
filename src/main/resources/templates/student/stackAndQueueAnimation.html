@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../js/dist/css/bootstrap.css">
+    <link href="../../css/accordion.css" rel="stylesheet" type="text/css"/>
+    <link href="../../css/animation.css" rel="stylesheet" type="text/css"/>
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/dist/js/bootstrap.js"></script>
+    <script src="../../js/draw.js"></script>
+    <style>
+        html,body{
+            width: 100%;
+            height:100%;
+            background-color: #868886;
+            min-width: 1080px;
+            font-family: STFangsong;
+        }
+        #navigation {
+            margin: auto;
+            position: fixed;
+            height: 58px;
+            width: 100%;
+            background-color: #5f5c5c;
+            /*opacity: 0.8;*/
+            padding: 0;
+        }
+        .showCase{
+            /*width:90%;*/
+            height: 100%;
+            margin-left: 40px;
+            margin-right:40px;
+            margin-top: 30px;
+            width: auto;
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 20px;
+            padding-top: 30px;
+            transition: 1s;
+        }
+        .menu{
+            width: 100%;
+            height: 58px;
+            position: relative;
+            /*margin-left: -580px;*/
+            right: auto;
+            list-style: none;
+            padding: 0;
+        }
+        .menu > li {
+            display: block;
+            float: right;
+            position: relative;
+        }
+        #inputElement{
+            width: 20%;
+            margin-left: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+<div id="navigation">
+    <ul class="menu">
+        <li><a href="#" id="backToHome"><i class="web-font-01">简介</i></a></li>
+        <li><a href="#s1"><i class="web-font-01">栈与队列</i></a>
+            <ul class="submenu">
+                <li><a href="#" id="stackNav">栈</a></li>
+                <li><a href="#" id="queueNav">队列</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>
+<div id="entrance" class="content">
+    <div class="gap"></div>
+    <div class="showCase" id="showCase">
+        <div id="introduce">
+            <h1><i class="web-font-01">栈和队列</i></h1>
+            <h3>1、栈的定义</h3>
+            <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;栈就是只能在一端插入和删除数据的链表，这个端就叫做栈顶（top），最后一个添加的数据第一个被删除。因此，这也叫后进先出（LAST IN FIRST OUT）链表或是先进后出链表（FIRST IN LAST OUT）。</p>
+            <h3>2、队列的定义</h3>
+            <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;队列是一种特殊的线性表，特殊之处在于它只允许在表的前端（front）进行删除操作，而在表的后端（rear）进行插入操作，和栈一样，队列是一种操作受限制的线性表。进行插入操作的端称为队尾，进行删除操作的端称为队头。</p>
+        </div>
+        <div id="exhibition">
+            <button type="button" id="optionFirst" class="btn btn-primary">操作一</button>
+            <button type="button" id="optionSecond" class="btn btn-primary">操作二</button>
+            <input type="text" class="form-control" placeholder="请输入要操作元素的值..." id="inputElement">
+            <br>
+            <canvas id="canvas" width="1200px" height="600px">
+
+            </canvas>
+        </div>
+
+    </div>
+</div>
+<script>
+    window.onload = function () {
+        var canvas = document.getElementById("canvas");
+
+        //判断浏览器是否支持canvas
+        if (canvas.getContext("2d")) {
+            var context = canvas.getContext("2d");
+        } else {
+            alert("当前浏览器不支持canvas，请更换浏览器稍后再试")
+        }
+        //点击简介按钮进入介绍页面
+        $("#backToHome").click(function () {
+            $("#introduce").css("display","block");
+            $("#showCase").css("background-color","rgba(255,255,255,0.8)");
+            $("#exhibition").css("display","none");
+        });
+        /*
+*****************************************栈***************************************************
+*/
+        $("#stackNav").click(function () {
+            //解除之前已绑定的事件
+            $('#optionFirst').unbind("click");
+            $('#optionSecond').unbind("click");
+            context.clearRect(0, 0, 900, 600);
+            //绘图背景
+            $("#introduce").css("display", "none");
+            $("#showCase").css("background-color", "rgba(255,255,255,1.0)");
+            $("#exhibition").css("display", "block");
+            //具体操作
+            console.log($("#optionFirst"));
+            $("#optionFirst").text("入栈");
+            $("#optionSecond").text("出栈");
+
+            context.clearRect(0, 0, 1000, 500);
+            var img = new Image();
+            var stack = [];
+            //绘制栈的结构
+            drawStackFinal(context, stack);
+
+            $("#optionFirst").click(function () {
+                if (stack.length >= 10) {
+                    alert("栈已满，不能再继续入栈操作！");
+                    $("#inputElement").val("");
+                } else {
+                    //代码截图
+                    img.src = '../components/img/stackIn.png';
+                    img.onload = function () {
+                        context.drawImage(img, 500, 180);
+                        console.log(img.width);
+                    };
+                    var drawTimes = 0;
+                    var stackInInterval = setInterval(function () {
+                        context.save();
+                        //清空画布
+                        context.clearRect(0, 0, 300, 500);
+                        //绘制当前的栈
+                        drawStackFinal(context, stack);
+                        //绘制元素
+                        drawRect(context, 100, 50 + 40 * drawTimes, 50, 40, 1, '#fff', '#FF0', $("#inputElement").val(), "#000", 5, 25);
+                        //绘制箭头
+                        drawLineArrow(context, 200, 75 + drawTimes * 40, 160, 75 + drawTimes * 40, '#000');
+                        drawTimes += 1;
+                        if (drawTimes > (10 - stack.length)) {
+                            clearInterval(stackInInterval);
+                        }
+                        context.restore();
+                    }, 100);
+
+                    //绘制最终的结果
+                    setTimeout(function () {
+                        stack[stack.length] = $("#inputElement").val();
+                        drawStackFinal(context, stack);
+                        drawLineArrow(context, 200, 75 + 40 * (10 - stack.length + 1), 160, 75 + 40 * (10 - stack.length + 1), '#000');
+                        drawText(context, "25px 黑体", "#ff0000", "top", 210, 80 + 40 * (10 - stack.length + 1));
+                        $("#inputElement").val("");
+                    }, 3000)
+                }
+            });
+
+            $("#optionSecond").click(function () {
+                if (stack.length <= 0) {
+                    alert("栈已空，不能再继续出栈操作！");
+                    $("#inputElement").val("");
+                } else {
+                    //代码截图
+                    img.src = '../components/img/stackOut.png';
+                    img.onload = function () {
+                        context.drawImage(img, 500, 180);
+                        console.log(img.width);
+                    };
+                    var drawTimes = 0;
+                    var outElement = stack[stack.length - 1];
+                    stack.length--;
+                    var stackOutInterval = setInterval(function () {
+                        context.save();
+                        //清空画布
+                        context.clearRect(0, 0, 300, 500);
+                        //绘制当前的栈
+                        drawStackFinal(context, stack);
+                        //绘制元素
+                        drawRect(context, 100, 50 + 40 * (10 - stack.length) - 40 * drawTimes, 50, 40, 1, '#fff', '#FF0', outElement, "#000", 5, 25);
+                        //绘制箭头
+                        drawLineArrow(context, 200, 75 + 40 * (10 - stack.length) - 40 * drawTimes, 160, 75 + 40 * (10 - stack.length) - 40 * drawTimes, '#000');
+                        drawTimes += 1;
+                        if (drawTimes > (10 - stack.length)) {
+                            clearInterval(stackOutInterval);
+                        }
+                        context.restore();
+                    }, 100);
+
+
+                    setTimeout(function () {
+                        drawStackFinal(context, stack);
+                        drawLineArrow(context, 200, 75 + 40 * (10 - stack.length + 1), 160, 75 + 40 * (10 - stack.length + 1), '#000');
+                        drawText(context, "25px 黑体", "#ff0000", "top", 210, 80 + 40 * (10 - stack.length + 1));
+                        $("#inputElement").val("");
+                    }, 3000)
+                }
+            })
+
+        })
+
+        /*
+    *****************************************队列***************************************************
+    */
+        $("#queueNav").click(function () {
+            //解除之前已绑定的事件
+            $('#optionFirst').unbind("click");
+            $('#optionSecond').unbind("click");
+            context.clearRect(0, 0, 900, 600);
+            //绘图背景
+            $("#introduce").css("display", "none");
+            $("#showCase").css("background-color", "rgba(255,255,255,1.0)");
+            $("#exhibition").css("display", "block");
+            //具体操作
+            console.log($("#optionFirst"));
+            $("#optionFirst").text("入队");
+            $("#optionSecond").text("出队");
+
+            context.clearRect(0, 0, 1000, 500);
+            var img = new Image();
+            var queue = [];
+            drawQueueFinal(context, queue);
+            context.save();
+            context.translate(250, 250);
+            context.rotate(-Math.PI / 12);
+            drawLineArrow(context, 0, 0, -100, 0, "red");
+            context.rotate(-Math.PI / 12);
+            drawLineArrow(context, 0, 0, -100, 0, "blue");
+            context.restore();
+
+
+            var front = 0;
+            var rear = 0;
+            $("#optionFirst").click(function () {
+                if (queue.length >= 7) {
+                    alert("队列已满，不能继续入队");
+                } else if ($("#inputElement").val() == "") {
+                    alert("请输入要加入的值");
+                } else {
+                    //代码截图
+                    img.src = '../components/img/queueIn.png';
+                    img.onload = function () {
+                        context.drawImage(img, 600, 80);
+                        console.log(img.width);
+                    };
+                    queue[queue.length] = $("#inputElement").val();
+                    rear++;
+                    if (rear === 8) {
+                        rear = 0;
+                    }
+                    //绘制队列的结构
+                    drawQueueFinal(context, queue, front);
+                    //绘制指针
+                    context.save();
+                    context.translate(250, 250);
+                    context.rotate(Math.PI / 4 * front - Math.PI / 12);
+                    drawLineArrow(context, 0, 0, -100, 0, "red");
+                    context.restore();
+                    context.save();
+                    context.translate(250, 250);
+                    context.rotate(Math.PI / 4 * rear - Math.PI / 12);
+                    drawLineArrow(context, 0, 0, -100, 0, "blue");
+                    context.restore();
+                    $("#inputElement").val("");
+                }
+            });
+
+            $("#optionSecond").click(function () {
+                if (queue.length <= 0) {
+                    alert("队列已空，不能继续出队");
+                } else {
+                    //代码截图
+                    img.src = '../components/img/queueOut.png';
+                    img.onload = function () {
+                        context.drawImage(img, 600, 80);
+                        console.log(img.width);
+                    };
+                    front++;
+                    if (front === 8) {
+                        front = 0;
+                    }
+                    for (var i = 0; i < queue.length; i++) {
+                        queue[i] = queue[i + 1];
+                    }
+                    queue.length--;
+                    //绘制队列的结构
+                    drawQueueFinal(context, queue, front);
+                    //绘制指针
+                    context.save();
+                    context.translate(250, 250);
+                    context.rotate(Math.PI / 4 * front - Math.PI / 6);
+                    drawLineArrow(context, 0, 0, -100, 0, "red");
+                    context.restore();
+                    context.save();
+                    context.translate(250, 250);
+                    context.rotate(Math.PI / 4 * rear - Math.PI / 12);
+                    drawLineArrow(context, 0, 0, -100, 0, "blue");
+                    context.restore();
+                    $("#inputElement").val("");
+                }
+            })
+        })
+    }
+
+</script>
+</body>
+
+</html>

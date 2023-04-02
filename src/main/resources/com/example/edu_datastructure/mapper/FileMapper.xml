@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.FileMapper">
+    <insert id="insertFile">
+        insert into file(filepath, filename, filesuffix, fileType)
+        values (#{filePath}, #{fileName}, #{fileSuffix}, #{fileType});
+    </insert>
+    <select id="selectFileById" resultType="com.example.edu_datastructure.pojo.Files">
+        select *
+        from file
+        where id = #{id};
+    </select>
+    <select id="queryAllData" resultType="com.example.edu_datastructure.pojo.Files">
+        select *
+        from file
+        where fileType = 1
+            limit #{begin}
+            , #{pageSize}
+    </select>
+    <select id="allDataCount" resultType="java.lang.Integer">
+        SELECT count(id)
+        FROM file
+        where fileType = 1
+    </select>
+</mapper>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../js/dist/css/bootstrap.css">
+    <link href="../../css/accordion.css" rel="stylesheet" type="text/css"/>
+    <link href="../../css/animation.css" rel="stylesheet" type="text/css"/>
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/dist/js/bootstrap.js"></script>
+    <script src="../../js/draw.js"></script>
+    <style>
+        html,body{
+            width: 100%;
+            height:100%;
+            background-color: #868886;
+            min-width: 1080px;
+            font-family: STFangsong;
+        }
+        #navigation {
+            margin: auto;
+            position: fixed;
+            height: 58px;
+            width: 100%;
+            background-color: #5f5c5c;
+            /*opacity: 0.8;*/
+            padding: 0;
+        }
+        .showCase{
+            /*width:90%;*/
+            height: 100%;
+            margin-left: 40px;
+            margin-right:40px;
+            margin-top: 30px;
+            width: auto;
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 20px;
+            padding-top: 30px;
+            transition: 1s;
+        }
+        .menu{
+            width: 100%;
+            height: 58px;
+            position: relative;
+            /*margin-left: -580px;*/
+            right: auto;
+            list-style: none;
+            padding: 0;
+        }
+        .menu > li {
+            display: block;
+            float: right;
+            position: relative;
+        }
+        #inputElement{
+            width: 20%;
+            margin-left: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+<div id="navigation">
+    <ul class="menu">
+        <li><a href="#" id="backToHome"><i class="web-font-01">简介</i></a></li>
+        <li><a href="#s2"><i class="web-font-01">查找</i></a>
+            <ul class="submenu">
+                <li><a href="#" id="orderSearch">顺序查找</a></li>
+                <li><a href="#" id="binSearch">折半查找</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>
+<div id="entrance" class="content">
+    <div class="gap"></div>
+    <div class="showCase" id="showCase">
+        <div id="introduce">
+            <h1><i class="web-font-01">查找</i></h1>
+            <h3>1、二分查找的定义</h3>
+            <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;二分查找也称折半查找，它是一种效率较高的查找方法。但是，折半查找要求线性表必须采用顺序存储结构，而且表中元素按关键字有序排列</p>
+        </div>
+        <div id="exhibition">
+            <button type="button" id="optionFirst" class="btn btn-primary">操作一</button>
+            <button type="button" id="optionSecond" class="btn btn-primary">操作二</button>
+            <input type="text" class="form-control" placeholder="请输入要操作元素的值..." id="inputElement">
+            <br>
+            <canvas id="canvas" width="1200px" height="600px">
+
+            </canvas>
+        </div>
+
+    </div>
+</div>
+<script>
+    window.onload = function () {
+        var canvas = document.getElementById("canvas");
+
+        //判断浏览器是否支持canvas
+        if (canvas.getContext("2d")) {
+            var context = canvas.getContext("2d");
+        } else {
+            alert("当前浏览器不支持canvas，请更换浏览器稍后再试")
+        }
+        //点击简介按钮进入介绍页面
+        $("#backToHome").click(function () {
+            $("#introduce").css("display","block");
+            $("#showCase").css("background-color","rgba(255,255,255,0.8)");
+            $("#exhibition").css("display","none");
+        });
+
+        /*
+         *****************************************查找***************************************************
+          */
+        /*
+            顺序查找
+         */
+        $("#orderSearch").click(function () {
+            //解除之前已绑定的事件
+            $('#optionFirst').unbind("click");
+            $('#optionSecond').unbind("click");
+            context.clearRect(0,0,900,600);
+            //绘图背景
+            $("#introduce").css("display", "none");
+            $("#showCase").css("background-color", "rgba(255,255,255,1.0)");
+            $("#exhibition").css("display", "block");
+            //具体操作
+            console.log($("#optionFirst"));
+            $("#optionFirst").text("插入");
+            $("#optionSecond").text("查找");
+
+            var array = [];
+            drawInsertSort(context,array,-1);
+
+            //插入操作
+            $("#optionFirst").click(function () {
+                var pattern = /^(-)?\d+(\.\d+)?$/;
+                if(array.length>=10){
+                    alert("警告：为保证演示质量，默认最多添加10个元素");
+                } else if (pattern.exec($("#inputElement").val()) == null||$("#inputElement").val()==""){
+                    alert("请输入正确的数字");
+                } else {
+                    array[array.length]=$("#inputElement").val();
+                    drawSearchArrray(context,array,-1);
+                    //将数组中字符类型转换为数字类型
+                    for(var i=0;i<array.length;i++){
+                        array[i]=parseInt(array[i]);
+                    }
+                    $("#inputElement").val("");
+                }
+            });
+
+            $("#optionSecond").click(function () {
+                //每排序一次清空一次画布
+                context.clearRect(0,0,1000,500);
+                drawSearchArrray(context,array,-1);
+                var pattern = /^(-)?\d+(\.\d+)?$/;
+                if (pattern.exec($("#inputElement").val()) == null||$("#inputElement").val()=="") {
+                    alert("请输入正确的数字");
+                } else {
+                    var i=0;
+                    var searchItem=parseInt($("#inputElement").val());
+                    var flag=0;
+                    var orderSearchTimer=setInterval(function () {
+                        if (flag===0){
+                            context.clearRect(0,0,1000,500);
+                            if (array[i]!==searchItem){
+                                drawSearchArrray(context,array,-1);
+                                drawSearchItem(context,searchItem,50+i*75,150,"#fff","#0000ff");
+                            } else {
+                                drawSearchArrray(context,array,i);
+                                drawSearchItem(context,searchItem,50+i*75,150,"#ffff00","#ff0000");
+                                flag=1;
+                                //alert("查找成功"+searchItem+"是当前数组中的第"+i+"号元素");
+                                //clearInterval(orderSearchTimer);
+                            }
+                            i++;
+                            if(i>array.length){
+                                flag=2;
+                            }
+                        } else if(flag===1){
+                            alert("查找成功,"+searchItem+"是当前数组中的第"+i+"号元素");
+                            clearInterval(orderSearchTimer);
+                        } else {
+                            alert("查找失败，当前数组中不存在值为"+searchItem+"的元素");
+                            context.clearRect(0,0,1000,500);
+                            drawSearchArrray(context,array,-1);
+                            clearInterval(orderSearchTimer);
+                        }
+
+                    },1000);
+                }
+                $("#inputElement").val("");
+            })
+
+
+
+        })
+        /*
+            折半查找
+         */
+        $("#binSearch").click(function () {
+            //解除之前已绑定的事件
+            $('#optionFirst').unbind("click");
+            $('#optionSecond').unbind("click");
+            context.clearRect(0,0,900,600);
+            //绘图背景
+            $("#introduce").css("display", "none");
+            $("#showCase").css("background-color", "rgba(255,255,255,1.0)");
+            $("#exhibition").css("display", "block");
+            //具体操作
+            console.log($("#optionFirst"));
+            $("#optionFirst").text("插入");
+            $("#optionSecond").text("查找");
+
+            var array = [];
+            var index=0;
+            drawInsertSort(context,array,-1);
+
+            //插入操作
+            $("#optionFirst").click(function () {
+                var pattern = /^(-)?\d+(\.\d+)?$/;
+                if(index>0){
+                    console.log(parseInt($("#inputElement").val())<array[index-1]);
+                }
+                if(array.length>=14){
+                    alert("警告：为保证演示质量，默认最多添加14个元素");
+                } else if (pattern.exec($("#inputElement").val()) == null||$("#inputElement").val()==""){
+                    alert("请输入正确的数字");
+                } else if((index>0)&&(parseInt($("#inputElement").val())<array[index-1])){
+                    alert("请有序插入数字，本系统采用递增序列！");
+                } else {
+                    index++;
+                    array[array.length]=$("#inputElement").val();
+                    drawBinSearchArrray(context,array,-1,-1,-1,-1);
+                    //将数组中字符类型转换为数字类型
+                    for(var i=0;i<array.length;i++){
+                        array[i]=parseInt(array[i]);
+                    }
+                    $("#inputElement").val("");
+                }
+
+
+            });
+
+            $("#optionSecond").click(function () {
+                //每排序一次清空一次画布
+                context.clearRect(0,0,1000,500);
+                drawBinSearchArrray(context,array,-1,-1,-1,-1);
+                var pattern = /^(-)?\d+(\.\d+)?$/;
+                if (pattern.exec($("#inputElement").val()) == null||$("#inputElement").val()=="") {
+                    alert("请输入正确的数字");
+                } else {
+                    //设置从数组的中间开始
+                    var i,j,mid;
+                    mid=parseInt(array.length/2);
+                    i=0;
+                    j=array.length-1;
+                    var searchItem=parseInt($("#inputElement").val());
+                    var flag=0;
+                    var orderSearchTimer=setInterval(function () {
+                        if (flag===0){
+                            context.clearRect(0,0,1000,500);
+                            drawBinSearchArrray(context,array,-1,i,j,mid);
+                            drawSearchItem(context,searchItem,50+mid*75,200,"#fff","#0000ff");
+                            if(i>j){
+                                // 查找失败
+                                flag=2;
+                            }
+                            else if (searchItem<array[mid]){
+                                //要查找的元素在中间元素之前
+                                j=mid-1;
+                                mid=parseInt((i+j)/2);
+                            } else if (searchItem>array[mid]){
+                                //要找的元素在中间元素之前
+                                i=mid+1;
+                                mid=parseInt((i+j)/2);
+                            } else {
+                                //查找成功
+                                context.clearRect(0,0,1000,500);
+                                drawBinSearchArrray(context,array,-1,i,j,mid);
+                                drawSearchItem(context,searchItem,50+mid*75,200,"#ffff00","#ff0000");
+                                flag=1;
+                            }
+                        } else if(flag===1){
+                            alert("查找成功,"+searchItem+"是当前数组中的第"+mid+"号元素");
+                            clearInterval(orderSearchTimer);
+                        } else {
+                            alert("查找失败，当前数组中不存在值为"+searchItem+"的元素");
+                            context.clearRect(0,0,1000,500);
+                            drawBinSearchArrray(context,array,mid,i,j,mid);
+                            clearInterval(orderSearchTimer);
+                        }
+
+                    },1000);
+
+                }
+                $("#inputElement").val("");
+            })
+
+        });
+    };
+</script>
+</body>
+
+</html>
+
+

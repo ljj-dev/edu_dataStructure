@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <script src="../js/jquery.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../js/orgchart/jquery.orgchart.css">
+    <script type="text/javascript" src="../js/orgchart/jquery.orgchart.js"></script>
+    <link rel="stylesheet" href="../css/studentMain.css"/>
+    <style>
+        /*css,不引用默认的布局部分*/
+        #chart-container {
+            width: 100%;
+            margin: 0 auto;
+            height: calc(100% - 80px);
+            overflow: auto;
+            overflow-x: auto;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+<div id="studentMain">
+    <template>
+        <div class="prepare">
+            <strong style="color: #f5f6f5; line-height:40px; font-size:18px; margin-left:20px">介绍</strong>
+        </div>
+    </template>
+    <el-main style="overflow: hidden">
+        <div class="showCase" id="showCase">
+            <div id="introduce">
+                <h1><i class="web-font-01">数据结构</i></h1>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;数据结构(data structure)是带有结构特性的数据元素的集合，它研究的是数据的逻辑结构和数据的物理结构以及它们之间的相互关系，并对这种结构定义相适应的运算，设计出相应的算法，并确保经过这些运算以后所得到的新结构仍保持原来的结构类型。简而言之，数据结构是相互之间存在一种或多种特定关系的数据元素的集合，即带“结构”的数据元素的集合。“结构”就是指数据元素之间存在的关系，分为逻辑结构和存储结构。</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;数据的逻辑结构和物理结构是数据结构的两个密切相关的方面，同一逻辑结构可以对应不同的存储结构。算法的设计取决于数据的逻辑结构，而算法的实现依赖于指定的存储结构。</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;数据结构的研究内容是构造复杂软件系统的基础，它的核心技术是分解与抽象。通过分解可以划分出数据的3个层次；再通过抽象，舍弃数据元素的具体内容，就得到逻辑结构。类似地，通过分解将处理要求划分成各种功能，再通过抽象舍弃实现细节，就得到运算的定义。上述两个方面的结合可以将问题变换为数据结构。这是一个从具体（即具体问题）到抽象（即数据结构）的过程。然后，通过增加对实现细节的考虑进一步得到存储结构和实现运算，从而完成设计任务。这是一个从抽象（即数据结构）到具体（即具体实现）的过程。</p>
+            </div>
+        </div>
+    </el-main>
+
+    <template>
+        <div class="prepare">
+            <strong style="color: #f5f6f5; line-height:40px; font-size:18px; margin-left:20px">数据结构组织架构</strong>
+        </div>
+    </template>
+    <template>
+        <div id="chart-container" align="center"></div>
+    </template>
+    <template>
+        <div class="prepare">
+            <strong style="color: #f5f6f5; line-height:40px; font-size:18px; margin-left:20px">了解数据结构</strong>
+        </div>
+    </template>
+    <el-main style="overflow: hidden">
+        <template>
+            <el-carousel :interval="4000" type="card" height="450px">
+                <el-carousel-item v-for="(data, index) in tableData" :key="index">
+                    <el-card class="box-card" shadow="hover">
+                        <div slot="header" class="clearfix">
+                            <span><strong style="color: #8a6d3b">{{data.chapterName}}</strong></span>
+                            <el-button style="float: right; padding: 3px 0" type="text" @click="start01(data.url)">开始学习
+                            </el-button>
+                        </div>
+                        <div>
+                            <ol v-for="sectionData in data.section" :key="index">
+                                <li style="color: white">{{sectionData.sectionName}}</li>
+                            </ol>
+                        </div>
+                    </el-card>
+                </el-carousel-item>
+            </el-carousel>
+        </template>
+    </el-main>
+
+</div>
+
+<script>
+    (function ($) {
+        $(function () {
+            var datascource = {
+                'name': '0',
+                'title': '数据结构',
+                'children': [
+                    {'name': '1', 'title': '数组'},
+                    {
+                        'name': '2', 'title': '链表',
+                        'children': [
+                            {
+                                'name': '2-1', 'title': '数组VS链表',
+                                'children': [
+                                    {'name': '2-1-1', 'title': '内存地址'},
+                                    {'name': '2-1-2', 'title': '数据长度'},
+                                    {'name': '2-1-3', 'title': '增删效率'},
+                                    {'name': '2-1-4', 'title': '查询效率'},
+                                    {'name': '2-1-4', 'title': '数据访问方式'}
+                                ]
+                            }
+                        ]
+                    },
+                    {'name': '3', 'title': '栈'},
+                    {'name': '4', 'title': '队列'},
+                    {
+                        'name': '5', 'title': '树',
+                        'children': [
+                            {
+                                'name': '5-1', 'title': '常用的树',
+                                'children': [
+                                    {'name': '5-1-1', 'title': '二叉排序树'},
+                                    {'name': '5-1-2', 'title': '平衡二叉树'},
+                                    {
+                                        'name': '5-1-3', 'title': '红黑树',
+                                        'children': [
+                                            {
+                                                'name': '5-1-3-1', 'title': '平衡二叉树VS红黑树',
+                                                'children': [
+                                                    {'name': '5-1-3-1-1', 'title': '应用场景'},
+                                                    {'name': '5-1-3-1-2', 'title': '插入效率'},
+                                                    {'name': '5-1-3-1-3', 'title': '增删效率'},
+                                                    {'name': '5-1-3-1-4', 'title': '查询效率'}
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {'name': '5-1-4', 'title': '树和森林'}
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'name': '6', 'title': '图',
+                        'children': [
+                            {'name': '6-1', 'title': '邻接矩阵'},
+                            {'name': '6-2', 'title': '邻接表'}
+                        ]
+                    },
+                    {'name': '7', 'title': '串'},
+                    {'name': '8', 'title': '递归'},
+                    {'name': '9', 'title': '排序'},
+                    {'name': '10', 'title': '查找'}
+                ]
+            };
+            $('#chart-container').orgchart({
+                'data': datascource, //数据
+                'nodeContent': 'title' //内容对应的字段
+            });
+        });
+    })(jQuery);
+
+    new Vue({
+        el: '#studentMain',
+        data() {
+            return {
+                //轮播
+                tableData: [
+                    {
+                        chapterName: '第一章  绪论',
+                        url: 'firstChapter.html',
+                        section: [
+                            {
+                                sectionName: '数据结构的研究内容'
+                            },
+                            {
+                                sectionName: '基本概念和术语'
+                            },
+                            {
+                                sectionName: '数据结构的内容'
+                            },
+                            {
+                                sectionName: '算法和算法分析'
+                            },
+                            {
+                                sectionName: '基础练习'
+                            },
+                        ]
+                    },
+                    {
+                        chapterName: '第二章  线性表',
+                        url: 'secondChapter.html',
+                        section: [
+                            {
+                                sectionName: '线性表的定义'
+                            },
+                            {
+                                sectionName: '线性表的顺序表示与实现'
+                            },
+                            {
+                                sectionName: '线性表的链式存储表示与实现'
+                            },
+                            {
+                                sectionName: '典型应用——一元多项式的表示和相加'
+                            },
+                            {
+                                sectionName: '基础练习'
+                            },
+                        ]
+                    },
+                    {
+                        chapterName: '第三章  栈和队列',
+                        url: 'thirdChapter.html',
+                        section: [
+                            {
+                                sectionName: '栈'
+                            },
+                            {
+                                sectionName: '栈的应用举例'
+                            },
+                            {
+                                sectionName: '栈与递归'
+                            },
+                            {
+                                sectionName: '队列'
+                            },
+                            {
+                                sectionName: '基础练习'
+                            },
+                        ]
+                    },
+                    {
+                        chapterName: '第四章  串',
+                        url: 'fourthChapter.html',
+                        section: [
+                            {
+                                sectionName: '串类型的定义'
+                            },
+                            {
+                                sectionName: '串的表示与实现'
+                            },
+                            {
+                                sectionName: '串的模式匹配算法'
+                            },
+                            {
+                                sectionName: '基础练习'
+                            },
+                        ]
+                    },
+                    {
+                        chapterName: '第五章  数组和广义表',
+                        url: 'fifthChapter.html',
+                        section: [
+                            {
+                                sectionName: '数组的定义'
+                            },
+                            {
+                                sectionName: '数组的顺序表示和实现'
+                            },
+                            {
+                                sectionName: '矩阵的压缩存储'
+                            },
+                            {
+                                sectionName: '广义表的定义'
+                            },
+                            {
+                                sectionName: '广义表的存储结构'
+                            },
+                            {
+                                sectionName: '基础练习'
+                            },
+                        ]
+                    },
+                    {
+                        chapterName: '第六章  树和二叉树',
+                        url: 'sixthChapter.html',
+                        section: [
+                            {
+                                sectionName: '树'
+                            },
+                            {
+                                sectionName: '二叉树'
+                            },
+                            {
+                                sectionName: '二叉树的遍历及应用'
+                            },
+                            {
+                                sectionName: 'Huffman树'
+                            },
+                            {
+                                sectionName: '树、森林和二叉树'
+                            },
+                            {
+                                sectionName: '基础练习'
+                            },
+                        ]
+                    },
+                    {
+                        chapterName: '第七章  图',
+                        url: 'seventhChapter.html',
+                        section: [
+                            {
+                                sectionName: '图的定义和基本术语'
+                            },
+                            {
+                                sectionName: '图的存储结构'
+                            },
+                            {
+                                sectionName: '图的遍历'
+                            },
+                            {
+                                sectionName: '最小生成树'
+                            },
+                            {
+                                sectionName: '树、有向无环图及其应用'
+                            },
+                            {
+                                sectionName: '最短路径'
+                            },
+                            {
+                                sectionName: '基础练习'
+                            },
+                        ]
+                    },
+                    {
+                        chapterName: '第八章  查找',
+                        url: 'eighthChapter.html',
+                        section: [
+                            {
+                                sectionName: '静态查找'
+                            },
+                            {
+                                sectionName: '动态查找'
+                            },
+                            {
+                                sectionName: '哈希表'
+                            },
+                            {
+                                sectionName: '基础练习'
+                            },
+                        ]
+                    },
+                    {
+                        chapterName: '第九章  排序',
+                        url: 'ninthChapter.html',
+                        section: [
+                            {
+                                sectionName: '排序概述'
+                            },
+                            {
+                                sectionName: '插入排序'
+                            },
+                            {
+                                sectionName: '交换排序'
+                            },
+                            {
+                                sectionName: '选择排序'
+                            },
+                            {
+                                sectionName: '归并排序'
+                            },
+                            {
+                                sectionName: '基数排序'
+                            },
+                            {
+                                sectionName: '各种内部排序方法的比较'
+                            },
+                            {
+                                sectionName: '基础练习'
+                            },
+                        ]
+                    },
+                ],
+
+                //折叠面板
+                activeNames: ['1'],
+            };
+        },
+        methods: {
+            start01(url) {
+                window.location.href = "prepare/" + url
+            },
+            handleChange(val) {
+                console.log(val);
+            }
+        }
+
+    })
+</script>
+</body>
+</html>

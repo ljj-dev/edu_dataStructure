@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>数据结构课程网站学生端</title>
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <script src="../js/jquery.js" charset="utf-8"></script>
+    <script src="../js/dist/js/bootstrap.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../js/dist/css/bootstrap.css"/>
+    <link rel="stylesheet" href="../css/studentIndex.css"/>
+    <style>
+        .el-input__inner {
+            width: 50%;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="homeWrap">
+        <el-container style="height: 100%;overflow-y: hidden;" direction="vertical">
+            <el-header>
+                <el-menu
+                        :default-active="activeIndex"
+                        class="el-menu-demo"
+                        mode="horizontal"
+                        @select="handleSelect"
+                        background-color="#545c64"
+                        text-color="#fff"
+                        active-text-color="#ffd04b">
+                    <el-menu-item index="">
+                        <el-link :underline="false" class="logo" th:href="@{/student/main.html}" target="mainBody">
+                            <strong style="color: rgba(183,155,17,0.85); font-family: 'Copperplate Gothic Light'">数据结构学习网站</strong>
+                        </el-link>
+                    </el-menu-item>
+                    <el-menu-item index="1">
+                        <el-link :underline="false" th:href="@{/student/main.html}" target="mainBody">首页</el-link>
+                    </el-menu-item>
+                    <el-menu-item index="2">
+                        <el-dropdown>
+                            <span class="el-dropdown-link">
+                                <i class="el-icon-notebook-2"></i>
+                                    我的课程
+                                <i class="el-icon-arrow-down el-icon--right"></i>
+                            </span>
+                            <el-dropdown-menu slot="dropdown">
+                                <el-dropdown-item>
+                                    <el-link :underline="false" th:href="@{/student/myCourse.html}" target="mainBody">
+                                        <i class="el-icon-reading"></i>
+                                        课程学习
+                                    </el-link>
+                                </el-dropdown-item>
+                                <el-dropdown-item>
+                                    <el-link :underline="false" th:href="@{/student/myHomework.html}" target="mainBody">
+                                        <i class="el-icon-edit"></i>
+                                        我的作业
+                                    </el-link>
+                                </el-dropdown-item>
+                                <el-dropdown-item>
+                                    <el-link :underline="false" th:href="@{/student/myData.html}" target="mainBody">
+                                        <i class="el-icon-folder-opened"></i>
+                                        我的资料
+                                    </el-link>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                    </el-menu-item>
+                    <el-menu-item index="3">
+                        <el-dropdown>
+                            <span class="el-dropdown-link">
+                                <i class="el-icon-s-platform"></i>
+                                    在线考试
+                                <i class="el-icon-arrow-down el-icon--right"></i>
+                            </span>
+                            <el-dropdown-menu slot="dropdown">
+                                <el-dropdown-item>
+                                    <el-link :underline="false" th:href="@{/student/onlineExam.html}" target="mainBody">
+                                        <i class="el-icon-edit"></i>
+                                        进行考试
+                                    </el-link>
+                                </el-dropdown-item>
+                                <el-dropdown-item>
+                                    <el-link :underline="false" th:href="@{/student/onlineExamLog.html}" target="mainBody">
+                                        <i class="el-icon-s-marketing"></i>
+                                        考试记录
+                                    </el-link>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                    </el-menu-item>
+                    <el-menu-item index="4">
+                        <el-link :underline="false" th:href="@{/student/algorithmAnimation.html}" target="mainBody">
+                            <i class="el-icon-data-analysis"></i>
+                            简单理解
+                        </el-link>
+                    </el-menu-item>
+                    <el-menu-item index="5">
+                        <el-link :underline="false" th:href="@{/student/onlineJudge.html}" target="mainBody">
+                            <i class="el-icon-edit-outline"></i>
+                            练一练
+                        </el-link>
+                    </el-menu-item>
+                    <el-menu-item index="" disabled="true" id="el-menu-item-placeholder1"></el-menu-item>
+                    <el-menu-item index="6">
+
+                        <el-dropdown>
+                            <span class="el-dropdown-link">
+                                <el-avatar th:text="${session.student.studentName}"></el-avatar>
+                                <i class="el-icon-arrow-down el-icon--right"></i>
+                            </span>
+                            <el-dropdown-menu slot="dropdown">
+                                <el-dropdown-item>
+                                    <el-button type="text" v-on:click="queryMyInfo()">个人信息</el-button>
+                                </el-dropdown-item>
+                                <el-dropdown-item>
+                                    <el-button type="text" v-on:click="signLog()">
+                                        签到记录
+                                    </el-button>
+                                </el-dropdown-item>
+                                <el-dropdown-item>
+                                    <el-button type="text" v-on:click="checkLog()">
+                                        退出登录
+                                    </el-button>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                    </el-menu-item>
+                </el-menu>
+
+                <template>
+                    <el-dialog title="个人信息" :visible.sync="dialogMyInfo">
+                        <el-form :model="infoForm">
+                            <el-form-item label="姓名" :label-width="formLabelWidth">
+                                <el-input v-model="infoForm.studentName" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="性别" :label-width="formLabelWidth">
+                                <el-input v-model="infoForm.studentSex" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="学号" :label-width="formLabelWidth">
+                                <el-input v-model="infoForm.studentId" autocomplete="off"
+                                          readonly="readonly"></el-input>
+                            </el-form-item>
+                            <el-form-item label="年级" :label-width="formLabelWidth">
+                                <el-input v-model="infoForm.studentGrade" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="班级" :label-width="formLabelWidth"
+                                          :rules="[{required: true, message: '暂未加入班级'}]">
+                                <el-input v-model="infoForm.classId" autocomplete="off" readonly="readonly"></el-input>
+                            </el-form-item>
+                            <div v-if="infoForm.classId==null">
+                                <el-button @click="joinClass()">加入班级</el-button>
+                            </div>
+                            <div v-if="infoForm.classId!=null">
+                                <el-button v-on:click="exitClass()">退出班级</el-button>
+                            </div>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogMyInfo = false">取 消</el-button>
+                            <el-button type="primary" @click="changeInfo()">修改信息</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <el-dialog title="加入班级" :visible.sync="selectClassDialog">
+                        <el-form :model="selectClass">
+                            <el-form-item label="选择班级" :label-width="formLabelWidth">
+                                <el-select v-model="selectClass.classId" placeholder="请选择加入的班级">
+                                    <el-option v-for="item in classFrom" :label="item.classId"
+                                               :value="item.classId"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="selectClassDialog = false">取 消</el-button>
+                            <el-button type="primary" @click="confirmClass()">确 定</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <el-dialog title="签到信息" :visible.sync="signDialog">
+                        <el-form :model="signFrom">
+                            <el-form-item label="累计签到天数" :label-width="formLabelWidth">
+                                <el-input v-model="signFrom.cumulativeDays" autocomplete="off"
+                                          readonly="readonly"></el-input>
+                            </el-form-item>
+                            <el-form-item label="连续签到天数" :label-width="formLabelWidth">
+                                <el-input v-model="signFrom.runningDays" autocomplete="off"
+                                          readonly="readonly"></el-input>
+                            </el-form-item>
+                            <el-form-item label="补签剩余次数" :label-width="formLabelWidth">
+                                <el-input v-model="signFrom.signNums" autocomplete="off"
+                                          readonly="readonly"></el-input>
+                            </el-form-item>
+                            <el-form-item label="上次签到时间" :label-width="formLabelWidth">
+                                <el-input v-model="signFrom.lastSign" autocomplete="off"
+                                          readonly="readonly"></el-input>
+                            </el-form-item>
+                            <div v-if="signFrom.lastSign!=signFrom.nowData">
+                                <el-button @click="doSigndialog = true">签到</el-button>
+                            </div>
+                            <div v-else-if="signFrom.lastSign==null">
+                                <el-button v-on:click="doSigndialog = true">暂时未签到过，请签到</el-button>
+                            </div>
+                            <div v-else-if="signFrom.lastSign==signFrom.nowData">
+                                <el-button v-on:click="signHint()">签到</el-button>
+                            </div>
+                        </el-form>
+                        <el-dialog
+                                width="50%"
+                                title="签到记录"
+                                :visible.sync="innerVisible"
+                                height="250"
+                                border
+                                append-to-body>
+                            <el-table :data="signData">
+                                <el-table-column label="姓名" width="150">
+                                    <div th:text="${session.student.studentName}"></div>
+                                </el-table-column>
+                                <el-table-column property="signTime" label="签到时间" width="200"></el-table-column>
+                                <el-table-column property="signType" label="签到类型"></el-table-column>
+                            </el-table>
+                        </el-dialog>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button type="primary" @click="querySign()">查看签到记录</el-button>
+                            <el-button type="primary" @click="signDialog = false">确 定</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <el-dialog title="进行签到" :visible.sync="doSigndialog">
+                        <el-form :model="doSignForm">
+                            <el-form-item label="签到类型" :label-width="formLabelWidth">
+                                <el-input v-model="doSignForm.signType" autocomplete="off"></el-input>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="doSigndialog = false">取 消</el-button>
+                            <el-button type="primary" @click="sign()">签 到</el-button>
+                        </div>
+                    </el-dialog>
+                </template>
+
+            </el-header>
+            <el-main style="overflow: hidden">
+                <!-- 内容主体区域 -->
+                <iframe src="main.html" name="mainBody" style="width: 100%;height: 100%;"></iframe>
+            </el-main>
+        </el-container>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                activeIndex: '1',
+                userSession: '',
+                userData: '',
+                username: '',
+                dialogMyInfo: false,
+                formLabelWidth: '100px',
+
+                selectClassDialog: false,
+
+                signDialog: false,
+                innerVisible: false,
+                doSigndialog: false,
+
+                infoForm: {
+                    studentName: '',
+                    classId: '',
+                    studentSex: '',
+                    studentGrade: '',
+                    studentId: '',
+                },
+
+                classFrom: [],
+                selectClass: {
+                    classId: '',
+                },
+
+                signData: [],
+                signFrom: {
+                    cumulativeDays: '0',
+                    runningDays: '0',
+                    lastSign: '',
+                    signNums: '3',
+                    nowData: '',
+                },
+                doSignForm: {
+                    signTime: '',
+                    signType: '',
+                },
+
+
+                respondCode: '',
+            };
+        },
+        methods: {
+            handleSelect(key, keyPath) {
+                console.log(key, keyPath);
+            },
+
+            //退出登录
+            checkLog() {
+                this.$confirm('确定退出登录', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/student/logout",
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            location.href = "http://localhost:8080/login";
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+            //查找个人信息
+            queryMyInfo() {
+                var _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/queryStudentById"
+                }).then(function (resp) {
+                    _this.infoForm = resp.data.data;
+                    _this.dialogMyInfo = true;
+                });
+            },
+
+            //修改个人信息
+            changeInfo() {
+                this.$confirm('确定修改个人信息', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/student/updateMyInfo",
+                        data: _this.infoForm,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.$message({
+                                type: 'success',
+                                message: '修改成功!'
+                            });
+                        } else {
+                            _this.$message({
+                                type: 'warning',
+                                message: '修改失败!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+            //选择加入的班级
+            joinClass() {
+                var _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/queryAllClass"
+                }).then(function (resp) {
+                    _this.classFrom = resp.data.data;
+                    _this.selectClassDialog = true;
+                });
+            },
+            //确定加入该班级
+            confirmClass() {
+                var _this = this;
+                console.log(this.selectClass);
+                this.$confirm('确定加入该班级', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/student/joinMyClass",
+                        data: _this.selectClass,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.$message({
+                                type: 'success',
+                                message: '加入成功!'
+                            });
+                            _this.selectClassDialog = false;
+                            _this.queryMyInfo();
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+            //退出班级
+            exitClass() {
+                var _this = this;
+                this.$confirm('确定退出班级', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.selectClass.classId = null;
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/student/exitMyClass",
+                        data: _this.selectClass,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.$message({
+                                type: 'success',
+                                message: '退出成功!'
+                            });
+                            _this.queryMyInfo();
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+            //签到
+            signLog() {
+                let aData = new Date();
+                this.signFrom.nowData = aData.getFullYear() + "-" + (aData.getMonth() + 1) + "-" + aData.getDate();
+                var _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/querySignById"
+                }).then(function (resp) {
+                    _this.signFrom = resp.data.data;
+                    console.log(_this.signFrom);
+                    _this.signDialog = true;
+                    _this.respondCode = resp.data.code;
+                    console.log(_this.respondCode);
+                    if (_this.respondCode == 10010) {
+                        _this.$message({
+                            type: 'warning',
+                            message: '数据初始化失败，无法查看该学生的签到数据!'
+                        });
+                    }
+                });
+            },
+
+            //查看签到记录
+            querySign() {
+                var _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/querySignLogById"
+                }).then(function (resp) {
+                    _this.signData = resp.data.data;
+                    _this.respondCode = resp.data.code;
+                    if (_this.respondCode == 10040) {
+                        _this.$message({
+                            type: 'warning',
+                            message: '暂时未签到过，请先签到!'
+                        });
+                    } else {
+                        _this.innerVisible = true;
+                    }
+                });
+            },
+
+            //签到
+            sign() {
+                var _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/sign",
+                    data: _this.doSignForm,
+                }).then(function (resp) {
+                    if (resp.data == "success") {
+                        _this.$message({
+                            type: 'success',
+                            message: '签到成功!'
+                        });
+                        _this.doSigndialog = false;
+                    } else {
+                        _this.$message({
+                            type: 'info',
+                            message: '已经签到!'
+                        });
+                        _this.doSigndialog = false;
+                    }
+                });
+            },
+
+            //已签到提示
+            signHint() {
+                this.$message({
+                    message: '今天已经签到',
+                    type: 'success'
+                });
+            },
+        },
+
+    })
+</script>
+</body>
+</html>

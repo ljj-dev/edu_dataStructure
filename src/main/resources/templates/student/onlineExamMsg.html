@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>考试详细</title>
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../css/onlineExamMsg.css"/>
+</head>
+<body>
+<div id="onlineExamMsg">
+    <template>
+        <div id="msg">
+            <div class="title">
+                <span>试卷列表</span>
+                <span>/  数据结构</span>
+            </div>
+            <div class="wrapper">
+                <ul class="top">
+                    <li class="example">数据结构</li>
+                    <li><i class="iconfont icon-pen-"></i></li>
+                    <li><i class="iconfont icon-share"></i></li>
+                    <li class="right">
+                        <div>
+                            <span class="count">总分</span>
+                            <span class="score">{{score[0]+score[1]+score[2]}}</span>
+                        </div>
+                    </li>
+                </ul>
+                <ul class="bottom">
+                    <li>更新于{{examData.examDate}}</li>
+                    <li>来自 {{examData.institute}}</li>
+                    <li class="btn">{{examData.type}}</li>
+                    <li class="right"><el-button @click="toAnswer(examData.examId)">开始答题</el-button></li>
+                </ul>
+                <ul class="info">
+                    <li @click="dialogVisible = true"><a href="javascript:;"><i class="iconfont icon-info"></i>考生须知</a></li>
+                </ul>
+            </div>
+            <div class="content">
+                <el-collapse v-model="activeName" >
+                    <el-collapse-item class="header" name="0">
+                        <template slot="title" class="stitle" >
+                            <div class="title">
+                                <span>数据结构</span><i class="header-icon el-icon-info"></i>
+                                <span class="time">{{examData.totalScore}}分 / {{examData.totalTime}}分钟</span>
+                                <el-button type="primary" size="small">点击查看试题详情</el-button>
+                            </div>
+                        </template>
+                        <el-collapse class="inner">
+                            <el-collapse-item>
+                                <template slot="title" name="1">
+                                    <div class="titlei">选择题 (共{{topicCount[0]}}题 共计{{score[0]}}分)</div>
+                                </template>
+                                <div class="contenti">
+                                    <ul class="question" v-for="(list, index) in topic[1]" :key="index">
+                                        <li>{{index+1}}. {{list.question}} {{list.score}}分</li>
+                                    </ul>
+                                </div>
+                            </el-collapse-item>
+                            <el-collapse-item>
+                                <template slot="title" name="2">
+                                    <div class="titlei">填空题 (共{{topicCount[1]}}题  共计{{score[1]}}分)</div>
+                                </template>
+                                <div class="contenti">
+                                    <ul class="question" v-for="(list, index) in topic[2]" :key="index">
+                                        <li>{{topicCount[0]+index+1}}.{{list.question}}  {{list.score}}分</li>
+                                    </ul>
+                                </div>
+                            </el-collapse-item>
+                            <el-collapse-item>
+                                <template slot="title" name="3">
+                                    <div class="titlei">判断题 (共{{topicCount[2]}}题 共计{{score[2]}}分)</div>
+                                </template>
+                                <div class="contenti">
+                                    <ul class="question" v-for="(list, index) in topic[3]" :key="index">
+                                        <li>{{topicCount[0]+topicCount[1]+index+1}}. {{list.question}} {{list.score}}分</li>
+                                    </ul>
+                                </div>
+                            </el-collapse-item>
+                        </el-collapse>
+                    </el-collapse-item>
+
+                </el-collapse>
+            </div>
+            <!--考生须知对话框-->
+            <el-dialog
+                    title="考生须知"
+                    :visible.sync="dialogVisible"
+                    width="30%">
+                <span>{{examData.tips}}</span>
+                <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">知道了</el-button>
+      </span>
+            </el-dialog>
+        </div>
+    </template>
+</div>
+
+<script>
+    let receive = window.opener["filter"];
+    //获取接收到的数据
+    let examId = receive["examId"];
+    console.log(examId)
+    new Vue({
+        el: '#onlineExamMsg',
+        data() {
+            return {
+                dialogVisible: false, //对话框属性
+                activeName: '0',  //默认打开序号
+                topicCount: [],//每种类型题目的总数
+                score: [],  //每种类型分数的总数
+                examData: { //考试信息
+                    examId: '',
+                    description: '',
+                    paperId: '',
+                    examDate: '',
+                    totalTime: '',
+                    grade: '',
+                    term: '',
+                    major: '',
+                    institute: '',
+                    totalScore: '',
+                    type: '',
+                    tips: '',
+                },
+                topic: {  //试卷信息
+
+                },
+            }
+        },
+        mounted: function () {
+            this.queryExamInfo(examId);
+        },
+        methods: {
+            //获取当前考试信息
+            queryExamInfo(examId) {
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/exam/queryExamById?examId="+examId,
+                }).then(function (resp) {
+                    _this.examData = resp.data.data;
+                    console.log(_this.examData);
+                    let paperId = _this.examData.paperId;
+                    _this.queryPaperInfo(paperId);
+                });
+            },
+
+            //获取试卷信息
+            queryPaperInfo(paperId){
+                var _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/exam/queryPaperById?paperId="+paperId,
+                }).then(function (resp) {
+                    _this.topic = resp.data;
+                    let keys = Object.keys(_this.topic) //对象转数组
+                    keys.forEach(e => {
+                        let data = _this.topic[e]
+                        _this.topicCount.push(data.length)
+                        let currentScore = 0
+                        for(let i = 0; i< data.length; i++) { //循环每种题型,计算出总分
+                            currentScore += data[i].score
+                        }
+                        _this.score.push(currentScore) //把每种题型总分存入score
+                    })
+                });
+            },
+
+            //开始答题
+            toAnswer(examId) {
+                console.log(examId)
+                let params = {
+                    "examId": examId,
+                };
+                window["filter"] = params;
+                window.open("../student/onlineExamAnswer.html");
+            },
+        }
+    })
+</script>
+</body>
+</html>

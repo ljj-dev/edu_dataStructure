@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.ScoreMapper">
+    <resultMap id="ScoreMap" type="com.example.edu_datastructure.pojo.ScoreManage">
+        <id property="scoreId" column="score_id"/>
+        <result property="examId" column="exam_id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="usualScore" column="usual_score"/>
+        <result property="finalScore" column="final_score"/>
+        <result property="score" column="score"/>
+        <result property="answerDate" column="answer_date"/>
+    </resultMap>
+    <insert id="addScore">
+        insert into score_manage(exam_id, student_id, usual_score, final_score, score, answer_date)
+        values (#{scoreManage.examId}, #{scoreManage.studentId}, #{scoreManage.usualScore}, #{scoreManage.finalScore},
+                #{scoreManage.score}, #{scoreManage.answerDate})
+    </insert>
+
+</mapper>

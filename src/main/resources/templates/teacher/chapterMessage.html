@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+</head>
+<body>
+<div id="chapterMessage">
+    <template>
+        <el-breadcrumb separator-class="el-icon-arrow-right">
+            <el-breadcrumb-item><a href="teacherMain.html" target="mainBody">首页</a></el-breadcrumb-item>
+            <el-breadcrumb-item>课程管理</el-breadcrumb-item>
+            <el-breadcrumb-item>学习章节管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </template>
+    <el-divider></el-divider>
+    <template>
+        <!--    添加章节按钮-->
+        <el-button type="primary" round @click="addChapter">添加章节</el-button>
+        <el-dialog title="添加章节" :visible.sync="dialogAddChapterFormVisible">
+            <el-form :model="addChapterInfo" ref="addChapterInfo">
+                <el-form-item label="章节编号" prop="chapterId" :rules="[
+                    { required: true, message: '请输入章节编号'}]">
+                    <el-input type="text" v-model="addChapterInfo.chapterId"></el-input>
+                </el-form-item>
+                <el-form-item label="章节名" prop="chapterName" :rules="[
+                    { required: true, message: '请输入章节名'}]">
+                    <el-input type="text" v-model="addChapterInfo.chapterName"></el-input>
+                </el-form-item>
+                <el-form-item label="小节数量" prop="sectionNum" :rules="[
+                    { required: true, message: '请输入小节数量'}]">
+                    <el-input type="textarea" v-model="addChapterInfo.sectionNum"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="cancelAddChapter()">取 消</el-button>
+                <el-button type="primary" @click="addChapterInsure('addChapterInfo')">确 定</el-button>
+                <el-button @click="resetForm('addChapterInfo')">重置</el-button>
+            </div>
+        </el-dialog>
+
+        <!--    批量删除按钮-->
+        <el-button type="danger" round @click="deleteByIds">批量删除</el-button>
+    </template>
+
+    <template>
+        <el-table
+                :data="tableData"
+                style="width: 100%"
+                :row-class-name="tableRowClassName"
+                @selection-change="handleSelectionChange">
+            <el-table-column
+                    type="selection"
+                    width="55">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    type="index"
+                    label="序号">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="chapterId"
+                    label="章节编号">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="chapterName"
+                    label="章节">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="sectionNum"
+                    label="小节数量">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    label="操作"
+                    width="200">
+                <template slot-scope="scope">
+                    <el-button type="primary" round
+                               @click="querySection(scope.row)" size="small">
+                        查看小节
+                    </el-button>
+                    <el-button type="danger" round
+                               @click="deleteChapterById(scope.row)" size="small">
+                        删除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </template>
+
+    <template>
+        <el-dialog title="每章小节" :visible.sync="dialogSection">
+            <el-button type="primary" round @click="addSection">添加小节</el-button>
+            <el-dialog title="添加小节" :visible.sync="dialogAddSectionFormVisible">
+                <el-form :model="addSectionInfo" ref="addSectionInfo">
+                    <el-form-item label="小节编号" prop="sectionId" :rules="[
+                    { required: true, message: '请输入小节编号'}]">
+                        <el-input type="text" v-model="addSectionInfo.sectionId"></el-input>
+                    </el-form-item>
+                    <el-form-item label="小节名" prop="sectionName" :rules="[
+                    { required: true, message: '请输入小节名'}]">
+                        <el-input type="text" v-model="addSectionInfo.sectionName"></el-input>
+                    </el-form-item>
+                    <el-form-item label="小节文件上传">
+                        <el-upload class="upload-demo" action="#" drag multiple :headers="headers" :auto-upload="false"
+                                   :file-list="fileSection" :on-change="handleChange">
+                            <i class="el-icon-upload"></i>
+                            <div class="el-upload__text"><em>点击选择文件上传</em></div>
+                        </el-upload>
+                        <el-button type="primary" @click="confirmUpload()">上 传</el-button>
+                    </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button @click="cancelAddSection()">取 消</el-button>
+                    <el-button type="primary" @click="addSectionInsure('addSectionInfo')">确 定</el-button>
+                    <el-button @click="resetForm('addSectionInfo')">重置</el-button>
+                </div>
+            </el-dialog>
+            <el-table :data="sectionData" height="250"
+                      border>
+                <el-table-column property="sectionId" label="小节编号"></el-table-column>
+                <el-table-column property="sectionName" label="小节"></el-table-column>
+                <el-table-column property="sectionUrl" label="地址"></el-table-column>
+                <el-table-column
+                        align="center"
+                        label="操作"
+                        width="200">
+                    <template slot-scope="scope">
+                        <el-button type="primary" round
+                                   @click="updateSection(scope.row)" size="small">
+                            编辑
+                        </el-button>
+                        <el-button type="danger" round
+                                   @click="deleteSectionById(scope.row)" size="small">
+                            删除
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-dialog>
+    </template>
+
+    <!--    分页-->
+    <template>
+        <div class="block">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[2, 4, 6, 8]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+            </el-pagination>
+        </div>
+    </template>
+</div>
+
+<script>
+    new Vue({
+        el: '#chapterMessage',
+        data() {
+            return {
+                tableData: [],
+                sectionData: [],
+                //被选中的id数组
+                selectedIds: [],
+                multipleSelection: [],
+                //分页查询 总数
+                totalCount: 50,
+                //每页显示的条数
+                pageSize: 15,
+                //当前的页码
+                currentPage: 1,
+
+                dialogSection: false,
+                dialogAddChapterFormVisible: false,
+                dialogAddSectionFormVisible: false,
+
+                addChapterInfo: {
+                    chapterId: '',
+                    chapterName: '',
+                    sectionNum: '',
+                },
+
+                selectChapterId: '',
+
+                addSectionInfo: {
+                    chapterId: '',
+                    sectionName: '',
+                    sectionId: '',
+                    sectionUrl: '',
+                },
+
+                fileSection: [],
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+
+            };
+        },
+        methods: {
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex === 1) {
+                    return 'warning-row';
+                } else if (rowIndex === 3) {
+                    return 'success-row';
+                }
+                return '';
+            },
+            //复选框选中后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                console.log(this.multipleSelection)
+            },
+
+            //分页相关函数
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                //重新设置每页的条数
+                this.pageSize = val;
+                this.queryAllChapter();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                //重新设置当前页码
+                this.currentPage = val;
+                this.queryAllChapter();
+            },
+
+            queryAllChapter() {
+                //分页查询  查询一页的数据
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/teacher/queryAllChapter?currentPage=" + _this.currentPage + "&pageSize=" + _this.pageSize,
+                }).then(function (resp) {
+                    //获取每一页的数据
+                    _this.tableData = resp.data.data.rows;
+
+                    //设置总记录数
+                    _this.totalCount = resp.data.data.totalCount;
+                    // console.log(_this.tableData);
+                });
+            },
+
+
+            //查看小节
+            querySection(row) {
+                console.log(row.chapterId);
+                this.selectChapterId = row.chapterId;
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/teacher/querySectionById?chapterId=" + row.chapterId,
+                }).then(function (resp) {
+                    _this.sectionData = resp.data.data;
+                    _this.dialogSection = true;
+                });
+            },
+
+            //删除章节
+            deleteChapterById(row) {
+                this.$confirm('确定删除', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    //页面加载完成之后，发送Ajax请求
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/teacher/deleteChapterById?chapterId=" + row.chapterId,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.queryAllChapter();
+                            _this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+            handleChange(file, fileSection) { //文件数量改变
+                this.fileSection = fileSection;
+            },
+            confirmUpload() { //确认上传
+                var fileSection = new FormData();
+                this.fileSection.forEach(
+                    (val, index) => {
+                        fileSection.append("fileSection", val.raw);
+                    }
+                );
+                console.log(fileSection);
+                this.sectionData.sectionUrl = fileSection;
+                axios.post("/teacher/uploadFile", fileSection).then(resp => {
+                    if (resp.data == "success"){
+                        this.$message({
+                            type: 'success',
+                            message: "上传成功！",
+                            duration: 1000
+                        });
+                    }
+                });
+            },
+
+            //添加小节
+            addSection() {
+                this.dialogAddSectionFormVisible = true;
+            },
+            addSectionInsure(addSectionInfo) {
+                console.log(this.addSectionInfo);
+                this.addSectionInfo.chapterId = this.selectChapterId;
+                this.$nextTick(() => {
+                    this.$refs.addSectionInfo.validate((valid) => {
+                        if (valid) {
+                            var _this = this;
+
+                            //发送ajax请求
+                            axios({
+                                method: "post",
+                                url: "http://localhost:8080/teacher/addSection",
+                                data: _this.addSectionInfo,
+                            }).then((resp) => {
+                                //判断响应数据是否为success
+                                if (resp.data == "success") {
+                                    //缴费成功提示
+                                    _this.$message({
+                                        message: '恭喜你，添加小节成功',
+                                        type: 'success'
+                                    });
+                                    _this.dialogAddSectionFormVisible = false;
+                                    _this.querySection();
+                                    _this.addSectionInfo.sectionName = "";
+                                    _this.addSectionInfo.sectionId = "";
+                                    _this.addSectionInfo.sectionUrl = "";
+                                } else {
+                                    _this.querySection();
+                                    _this.$message({
+                                        message: '添加小节失败',
+                                        type: 'warning'
+                                    });
+                                }
+                            });
+                        } else {
+                            console.log('error submit!!');
+                            return false;
+                        }
+                    });
+                })
+                ;
+            },
+
+            //取消添加小节
+            cancelAddSection(addSectionInfo) {
+                this.dialogAddSectionFormVisible = false;
+                this.addSectionInfo.sectionId = "";
+                this.addSectionInfo.sectionName = "";
+                this.addSectionInfo.sectionUrl = "";
+                this.$refs.addSectionInfo.resetFields();
+                this.$message({
+                    message: '已取消添加小节',
+                    type: 'info'
+                });
+            },
+
+            //编辑小节
+            updateSection(row) {
+
+            },
+
+            //删除小节
+            deleteSectionById(row) {
+
+            },
+
+            //添加章节
+            addChapter() {
+                this.dialogAddChapterFormVisible = true;
+            },
+            addChapterInsure(addChapterInfo) {
+                console.log(this.addChapterInfo);
+                this.$nextTick(() => {
+                    this.$refs.addChapterInfo.validate((valid) => {
+                        if (valid) {
+                            var _this = this;
+                            //发送ajax请求
+                            axios.post("http://localhost:8080/teacher/addChapter", _this.addChapterInfo).then((resp) => {
+                                //判断响应数据是否为success
+                                if (resp.data == "success") {
+                                    _this.queryAllChapter();
+                                    //缴费成功提示
+                                    _this.$message({
+                                        message: '恭喜你，添加章节成功',
+                                        type: 'success'
+                                    });
+                                    _this.dialogAddChapterFormVisible = false;
+                                    _this.addChapterInfo.chapterName = "";
+                                    _this.addChapterInfo.chapterId = "";
+                                    _this.addChapterInfo.sectionNum = "";
+                                } else {
+                                    _this.queryAllChapter();
+                                    _this.$message({
+                                        message: '添加章节失败',
+                                        type: 'warning'
+                                    });
+                                }
+                            });
+                        } else {
+                            console.log('error submit!!');
+                            return false;
+                        }
+                    });
+                });
+            },
+
+            //取消添加章节
+            cancelAddChapter() {
+                this.dialogAddChapterFormVisible = false;
+                this.addChapterInfo.chapterName = "";
+                this.addChapterInfo.chapterId = "";
+                this.addChapterInfo.sectionNum = "";
+                this.$refs.addChapterInfo.resetFields();
+                this.$message({
+                    message: '已取消添加章节',
+                    type: 'info'
+                });
+            },
+
+            resetForm(addChapterInfo) {
+                this.$refs.addChapterInfo.resetFields();
+            },
+
+            //批量删除章节
+            deleteByIds() {
+                if (this.multipleSelection.length <= 0) {
+                    this.$message({
+                        message: '未选择删除的选项',
+                        type: 'warning'
+                    });
+                } else {
+                    //1.创建id数组 从this.multipleSelection获取即可
+                    for (let i = 0; i < this.multipleSelection.length; i++) {
+                        let selectedElement = this.multipleSelection[i];
+                        this.selectedIds[i] = selectedElement.chapterId;
+                    }
+                    console.log(this.selectedIds);
+
+                    this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        //发送ajax请求
+                        var _this = this;
+                        //发送ajax请求
+                        axios({
+                            method: "post",
+                            url: "http://localhost:8080/teacher/deleteByIds",
+                            data: _this.selectedIds
+                        }).then(function (resp) {
+                            //判断响应数据是否为success
+                            if (resp.data == "success") {
+                                _this.queryAllChapter();
+                                _this.selectedIds = null;
+                                //删除成功提示
+                                _this.$message({
+                                    message: '恭喜你，删除成功',
+                                    type: 'success'
+                                });
+                            } else {
+                                //删除错误提示
+                                _this.$message.error('请选择删除的数据');
+                            }
+                        });
+                    }).catch(() => {
+                        this.$message({
+                            type: 'info',
+                            message: '已取消删除'
+                        });
+                    });
+                }
+            },
+
+        },
+        mounted() {
+            this.queryAllChapter();
+        }
+    })
+</script>
+</body>
+</html>

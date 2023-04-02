@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+</head>
+<body>
+<div id="examMessage">
+    <template>
+        <el-breadcrumb separator-class="el-icon-arrow-right">
+            <el-breadcrumb-item><a href="teacherMain.html" target="mainBody">首页</a></el-breadcrumb-item>
+            <el-breadcrumb-item>基础信息管理</el-breadcrumb-item>
+            <el-breadcrumb-item>在线考试管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </template>
+    <el-divider></el-divider>
+
+    <el-tabs v-model="activeName">
+        <el-tab-pane name="first">
+            <span slot="label" @click="queryExam()">查看考试</span>
+            <!--    添加考试按钮-->
+            <el-button type="primary" round @click="addExam">添加考试</el-button>
+            <el-dialog title="添加班级" :visible.sync="dialogAddExamFormVisible">
+                <el-form :model="addExamInfo" ref="addExamInfo">
+                    <el-form-item label="考试描述" prop="description" :rules="[
+                    { required: true, message: '请输入考试描述'}]">
+                        <el-input type="text" v-model="addExamInfo.description"></el-input>
+                    </el-form-item>
+                    <el-form-item label="试卷编号" prop="paperId" :rules="[
+                    { required: true, message: '请输入试卷编号'}]">
+                        <el-input type="text" v-model="addExamInfo.paperId"></el-input>
+                    </el-form-item>
+                    <el-form-item label="考试日期" prop="examDate" :rules="[
+                    { required: true, message: '请输入考试日期,日期格式20xx-xx-xx'}]">
+                        <el-input type="text" v-model="addExamInfo.examDate"></el-input>
+                    </el-form-item>
+                    <el-form-item label="考试时长" prop="totalTime" :rules="[
+                    { required: true, message: '请输入考试时长,单位分钟'}]">
+                        <el-input type="text" v-model="addExamInfo.totalTime"></el-input>
+                    </el-form-item>
+                    <el-form-item label="年级" prop="grade" :rules="[
+                    { required: true, message: '请输入年级'}]">
+                        <el-input type="text" v-model="addExamInfo.grade"></el-input>
+                    </el-form-item>
+                    <el-form-item label="学期" prop="term" :rules="[
+                    { required: true, message: '请输入学期'}]">
+                        <el-input type="text" v-model="addExamInfo.term"></el-input>
+                    </el-form-item>
+                    <el-form-item label="专业" prop="major" :rules="[
+                    { required: true, message: '请输入专业'}]">
+                        <el-input type="text" v-model="addExamInfo.major"></el-input>
+                    </el-form-item>
+                    <el-form-item label="学院" prop="institute" :rules="[
+                    { required: true, message: '请输入学院'}]">
+                        <el-input type="text" v-model="addExamInfo.institute"></el-input>
+                    </el-form-item>
+                    <el-form-item label="总分" prop="institute" :rules="[
+                    { required: true, message: '请输入总分'}]">
+                        <el-input type="text" v-model="addExamInfo.totalScore"></el-input>
+                    </el-form-item>
+                    <el-form-item label="考试类型" prop="type" :rules="[
+                    { required: true, message: '请输入考试类型'}]">
+                        <el-input type="text" v-model="addExamInfo.type"></el-input>
+                    </el-form-item>
+                    <el-form-item label="考生须知" prop="tips" :rules="[
+                    { required: true, message: '请输入考生须知'}]">
+                        <el-input type="textarea" v-model="addExamInfo.tips"></el-input>
+                    </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button @click="cancelAddExam()">取 消</el-button>
+                    <el-button type="primary" @click="addExamInsure('addExamInfo')">确 定</el-button>
+                    <el-button @click="resetForm('addExamInfo')">重置</el-button>
+                </div>
+            </el-dialog>
+            <template>
+                <el-table
+                        :data="tableData"
+                        style="width: 100%"
+                        :row-class-name="tableRowClassName"
+                        @selection-change="handleSelectionChange">
+                    <el-table-column
+                            type="selection"
+                            width="55">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            type="index"
+                            fixed
+                            label="序号">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="examId"
+                            label="考试编号">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="description"
+                            label="考试描述">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="paperId"
+                            label="试卷编号">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="examDate"
+                            label="考试日期">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="totalTime"
+                            label="考试时长">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="grade"
+                            label="年级">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="term"
+                            label="学期">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="major"
+                            label="专业">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="institute"
+                            label="学院">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="totalScore"
+                            label="总分">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="type"
+                            label="考试类型">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="tips"
+                            label="考生须知">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            label="操作"
+                            fixed="right"
+                            width="200">
+                        <template slot-scope="scope">
+                            <el-row>
+                                <el-button type="primary" round
+                                           @click="issueExamById(scope.row)" size="small">
+                                    发布考试
+                                </el-button>
+                            </el-row>
+                            <el-row>
+                                <el-button type="danger" round
+                                           @click="paperExamById(scope.row)" size="small">
+                                    生成试卷
+                                </el-button>
+                            </el-row>
+                            <el-row>
+                                <el-dropdown>
+                                <span class="el-dropdown-link">
+                                    <i class="el-icon-s-tools"></i>
+                                </span>
+                                    <el-dropdown-menu slot="dropdown">
+                                        <el-dropdown-item>
+                                            <el-button type="text" v-on:click="updateExamById(scope.row)">
+                                                编辑
+                                            </el-button>
+                                        </el-dropdown-item>
+                                        <el-dropdown-item>
+                                            <el-button type="text" v-on:click="deleteExamById(scope.row)">
+                                                删除
+                                            </el-button>
+                                        </el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </el-dropdown>
+                            </el-row>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </template>
+            <!--    分页-->
+            <template>
+                <div class="block" style="position: center;">
+                    <el-pagination
+                            @size-change="handleSizeChange"
+                            @current-change="handleCurrentChange"
+                            :current-page="currentPage"
+                            :page-sizes="[2, 4, 6, 8]"
+                            :page-size="100"
+                            layout="total, sizes, prev, pager, next, jumper"
+                            :total="totalCount">
+                    </el-pagination>
+                </div>
+            </template>
+
+            <!--    选择发布考试的班级-->
+            <template>
+                <el-dialog title="发布考试" :visible.sync="selectClassDialog">
+                    <el-form :model="selectClass">
+                        <el-form-item label="选择班级" :label-width="formLabelWidth">
+                            <el-select v-model="selectClass.classId" placeholder="请选择发布的班级">
+                                <el-option v-for="item in classFrom" :label="item.classId"
+                                           :value="item.classId"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-form>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="selectClassDialog = false">取 消</el-button>
+                        <el-button type="primary" @click="confirmIssueExamById()">确 定</el-button>
+                    </div>
+                </el-dialog>
+            </template>
+
+            <!--    生成试卷-->
+            <template>
+                <el-dialog title="生成试卷" :visible.sync="paperExamDialog">
+                    <div class="box">
+                        <ul>
+                            <li>
+                                <span>试题难度:</span>
+                                <el-select v-model="difficultyValue" placeholder="试题难度" class="w150">
+                                    <el-option
+                                            v-for="item in difficulty"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value">
+                                    </el-option>
+                                </el-select>
+                            </li>
+                            <li>
+                                <span>选择题数量：</span>
+                                <el-input type="text" v-model="multipleNumber"></el-input>
+                            </li>
+                            <li>
+                                <span>填空题数量：</span>
+                                <el-input type="text" v-model="fillNumber"></el-input>
+                            </li>
+                            <li>
+                                <span>判断题数量：</span>
+                                <el-input type="text" v-model="judgeNumber"></el-input>
+                            </li>
+                        </ul>
+                    </div>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="paperExamDialog = false">取 消</el-button>
+                        <el-button type="primary" @click="confirmPaperExamById()">生成试卷</el-button>
+                    </div>
+                </el-dialog>
+            </template>
+
+            <!--    编辑考试-->
+            <template>
+                <el-dialog title="考试信息" :visible.sync="dialogExamById">
+                    <el-form :model="updateExamFrom">
+                        <el-form-item label="考试编号" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.examId" autocomplete="off" readonly="readonly"></el-input>
+                        </el-form-item>
+                        <el-form-item label="考试描述" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.description" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="试卷编号" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.paperId" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="考试日期" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.examDate" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="考试时长" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.totalTime" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="年级" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.grade" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="学期" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.term" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="专业" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.major" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="学院" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.institute" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="总分" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.totalScore" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="考试类型" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.type" autocomplete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="考生须知" :label-width="formLabelWidth">
+                            <el-input v-model="updateExamFrom.tips" autocomplete="off"></el-input>
+                        </el-form-item>
+                    </el-form>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="dialogExamById = false">取 消</el-button>
+                        <el-button type="primary" @click="changeExamInfo()">修改信息</el-button>
+                    </div>
+                </el-dialog>
+            </template>
+        </el-tab-pane>
+
+
+        <el-tab-pane name="second">
+            <span slot="label" @click="queryIssueExam()">已发布的考试</span>
+            <template>
+                <el-table
+                        :data="tableIssueExamData"
+                        style="width: 100%"
+                        :row-class-name="tableRowClassName"
+                        @selection-change="handleSelectionChange">
+                    <el-table-column
+                            type="selection"
+                            width="55">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            type="index"
+                            fixed
+                            label="序号">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="examId"
+                            label="考试编号">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            prop="classId"
+                            label="班级">
+                    </el-table-column>
+                    <el-table-column
+                            align="center"
+                            label="操作"
+                            fixed="right"
+                            width="200">
+                        <template slot-scope="scope">
+                            <el-button type="primary" round
+                                       @click="updateIssueExamById(scope.row)" size="small">
+                                编辑
+                            </el-button>
+                            <el-button type="danger" round
+                                       @click="deleteIssueExamById(scope.row)" size="small">
+                                删除
+                            </el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </template>
+            <!--    分页-->
+            <template>
+                <div class="block" style="position: center;">
+                    <el-pagination
+                            @size-change="handleSizeChange"
+                            @current-change="handleCurrentChange"
+                            :current-page="currentPage"
+                            :page-sizes="[2, 4, 6, 8]"
+                            :page-size="100"
+                            layout="total, sizes, prev, pager, next, jumper"
+                            :total="totalCount">
+                    </el-pagination>
+                </div>
+            </template>
+        </el-tab-pane>
+        <el-tab-pane name="third">
+            <span slot="label">查看试卷</span>
+        </el-tab-pane>
+    </el-tabs>
+
+</div>
+
+<script>
+    new Vue({
+        el: '#examMessage',
+        data() {
+            return {
+                activeName: 'first',
+                tableData: [],
+                tableIssueExamData: [],
+                //被选中的id数组
+                selectedIds: [],
+                multipleSelection: [],
+                //分页查询 总数
+                totalCount: 50,
+                //每页显示的条数
+                pageSize: 15,
+                //当前的页码
+                currentPage: 1,
+
+                dialogAddExamFormVisible: false,
+                addExamInfo: {
+                    description: '',
+                    paperId: '',
+                    examDate: '',
+                    totalTime: '',
+                    grade: '',
+                    term: '',
+                    major: '',
+                    institute: '',
+                    totalScore: '',
+                    type: '',
+                    tips: '',
+                },
+
+                dialogExamById: false,
+                formLabelWidth: '100px',
+                updateExamFrom: {
+                    examId: '',
+                    description: '',
+                    paperId: '',
+                    examDate: '',
+                    totalTime: '',
+                    grade: '',
+                    term: '',
+                    major: '',
+                    institute: '',
+                    totalScore: '',
+                    type: '',
+                    tips: '',
+                },
+
+                temporaryUpdateExamId: '',
+                temporaryIssueExamId: '',
+                classFrom: [],
+                selectClass: {
+                    classId: '',
+                },
+                selectClassDialog: false,
+
+                paperExamDialog: false,
+                temporaryPaperId: '',
+                difficulty: [ //试题难度
+                    {
+                        value: '简单',
+                        label: '简单'
+                    },
+                    {
+                        value: '一般',
+                        label: '一般'
+                    },
+                    {
+                        value: '困难',
+                        label: '困难'
+                    }
+                ],
+                difficultyValue: '简单',
+                multipleNumber: null, //选择题出题数量
+                fillNumber: null, //填空题出题数量
+                judgeNumber: null, //判断题出题数量
+                postPaper: { //试卷管理表对应字段
+                    paperId: null,
+                    questionType: null, // 试卷类型 1选择题， 2判断题， 3填空题
+                    questionId: null,
+                }
+
+            };
+        },
+        methods: {
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex === 1) {
+                    return 'warning-row';
+                } else if (rowIndex === 3) {
+                    return 'success-row';
+                }
+                return '';
+            },
+            //复选框选中后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                console.log(this.multipleSelection)
+            },
+
+            //分页相关函数
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                //重新设置每页的条数
+                this.pageSize = val;
+                this.queryExam();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                //重新设置当前页码
+                this.currentPage = val;
+                this.queryExam();
+            },
+
+            //查找所有考试
+            queryExam() {
+                //分页查询  查询一页的数据
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/exam/queryExam?questionType=" + _this.questionType + "&currentPage=" + _this.currentPage + "&pageSize=" + _this.pageSize,
+                }).then(function (resp) {
+                    //获取每一页的数据
+                    _this.tableData = resp.data.data.rows;
+
+                    //设置总记录数
+                    _this.totalCount = resp.data.data.totalCount;
+                    // console.log(_this.tableData);
+                });
+            },
+
+            //添加考试
+            addExam() {
+                this.dialogAddExamFormVisible = true;
+            },
+            addExamInsure(addExamInfo) {
+                console.log(this.addExamInfo);
+                this.$nextTick(() => {
+                    this.$refs.addExamInfo.validate((valid) => {
+                        if (valid) {
+                            var _this = this;
+                            //发送ajax请求
+                            axios.post("http://localhost:8080/exam/addExam", _this.addExamInfo).then((resp) => {
+                                //判断响应数据是否为success
+                                if (resp.data == "success") {
+                                    _this.queryExam();
+                                    //成功提示
+                                    _this.$message({
+                                        message: '恭喜你，添加考试成功',
+                                        type: 'success'
+                                    });
+                                    _this.dialogAddExamFormVisible = false;
+                                    _this.addExamInfo.examDate = "";
+                                    _this.addExamInfo.description = "";
+                                    _this.addExamInfo.paperId = "";
+                                    _this.addExamInfo.totalTime = "";
+                                    _this.addExamInfo.grade = "";
+                                    _this.addExamInfo.institute = "";
+                                    _this.addExamInfo.major = "";
+                                    _this.addExamInfo.term = "";
+                                    _this.addExamInfo.tips = "";
+                                    _this.addExamInfo.totalScore = "";
+                                    _this.addExamInfo.type = "";
+                                } else {
+                                    _this.queryExam();
+                                    _this.$message({
+                                        message: '添加考试失败',
+                                        type: 'warning'
+                                    });
+                                }
+                            });
+                        } else {
+                            console.log('error submit!!');
+                            return false;
+                        }
+                    });
+                });
+            },
+
+            //取消添加考试
+            cancelAddExam() {
+                this.dialogAddExamFormVisible = false;
+                this.addExamInfo.examDate = "";
+                this.addExamInfo.description = "";
+                this.addExamInfo.paperId = "";
+                this.addExamInfo.totalTime = "";
+                this.addExamInfo.grade = "";
+                this.addExamInfo.institute = "";
+                this.addExamInfo.major = "";
+                this.addExamInfo.term = "";
+                this.addExamInfo.tips = "";
+                this.addExamInfo.totalScore = "";
+                this.addExamInfo.type = "";
+                this.$refs.addExamInfo.resetFields();
+                this.$message({
+                    message: '已取消添加考试',
+                    type: 'info'
+                });
+            },
+            //重置
+            resetForm(addExamInfo) {
+                this.$refs.addExamInfo.resetFields();
+            },
+
+
+            //编辑考试
+            updateExamById(row) {
+                console.log(row.examId);
+                this.temporaryUpdateExamId = row.examId;
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/exam/queryExamById?examId=" + row.examId,
+                }).then(function (resp) {
+                    _this.updateExamFrom = resp.data.data;
+                    _this.dialogExamById = true;
+                });
+            },
+            changeExamInfo() {
+                this.$confirm('确定修改题目信息', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/exam/updateExamById?examId=" + _this.temporaryUpdateExamId,
+                        data: _this.updateExamFrom,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.$message({
+                                type: 'success',
+                                message: '修改成功!'
+                            });
+                        } else {
+                            _this.$message({
+                                type: 'warning',
+                                message: '修改失败!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+
+            //删除考试
+            deleteExamById(row) {
+                this.$confirm('确定删除', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    //页面加载完成之后，发送Ajax请求
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/exam/deleteExamById?examId=" + row.examId,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.queryExam();
+                            _this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+            //发布考试
+            issueExamById(row) {
+                this.temporaryIssueExamId = row.examId;
+                var _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/queryAllClass"
+                }).then(function (resp) {
+                    _this.classFrom = resp.data.data;
+                    _this.selectClassDialog = true;
+                });
+            },
+            confirmIssueExamById() {
+                var _this = this;
+                console.log(this.selectClass);
+                this.$confirm('确定发布考试到该班级', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/exam/issueExamById?examId=" + _this.temporaryIssueExamId,
+                        data: _this.selectClass,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.$message({
+                                type: 'success',
+                                message: '发布成功!'
+                            });
+                            _this.selectClassDialog = false;
+                            _this.queryExam();
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+
+            //查找所有发布的考试
+            queryIssueExam() {
+                //分页查询  查询一页的数据
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/exam/queryIssueExam?questionType=" + _this.questionType + "&currentPage=" + _this.currentPage + "&pageSize=" + _this.pageSize,
+                }).then(function (resp) {
+                    //获取每一页的数据
+                    _this.tableIssueExamData = resp.data.data.rows;
+
+                    //设置总记录数
+                    _this.totalCount = resp.data.data.totalCount;
+                    // console.log(_this.tableData);
+                });
+            },
+            //编辑发布的考试
+            updateIssueExamById() {
+
+            },
+            //删除发布的考试
+            deleteIssueExamById(row) {
+                this.$confirm('确定删除', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    //页面加载完成之后，发送Ajax请求
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/exam/deleteIssueExamById?examId=" + row.examId + "&classId=" + row.classId,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.queryIssueExam();
+                            _this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+
+            //生成试卷
+            paperExamById(row) {
+                this.temporaryPaperId = row.paperId;
+                this.paperExamDialog = true;
+            },
+            confirmPaperExamById(){
+                var _this = this;
+                this.$confirm('确定生成试卷', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/exam/addPaperExamById",
+                        data: {
+                            multipleNumber: _this.multipleNumber,
+                            fillNumber: _this.fillNumber,
+                            judgeNumber: _this.judgeNumber,
+                            paperId: _this.temporaryPaperId,
+                        },
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.$message({
+                                type: 'success',
+                                message: '生成试卷成功!'
+                            });
+                            _this.paperExamDialog = false;
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+        },
+        mounted() {
+            this.queryExam();
+        }
+    })
+</script>
+</body>
+</html>

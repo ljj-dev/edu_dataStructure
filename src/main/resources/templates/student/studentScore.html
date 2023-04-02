@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>考试成绩</title>
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/vuex.min.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../css/studentScore.css"/>
+</head>
+<body>
+<div id="studentScore">
+    <template>
+        <div class="score">
+            <div class="title">
+                <p class="name">数据结构</p>
+                <p class="description">(总分：100分,限时：100分钟)</p>
+                <p class="description">学生：<label th:text="${session.student.studentName}"></label></p>
+                <p class="description">学号：<label th:text="${session.student.studentId}"></label></p>
+            </div>
+            <div class="total">
+                <div class="look">
+                    本次考试成绩
+                </div>
+                <div class="show">
+                    <div class="number" :class="{'border': isTransition}">
+                        <span>{{score}}</span>
+                        <span>分数</span>
+                    </div>
+                </div>
+                <ul class="time">
+                    <li class="start"><span>开始时间</span> <span>{{startTime}}</span></li>
+                    <li class="end"><span>结束时间</span> <span>{{endTime}}</span></li>
+                </ul>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+    let receive = window.opener["filter"];
+    //获取接收到的数据
+    let score = receive["score"];
+    let startTime = receive["startTime"];
+    let endTime = receive["endTime"];
+    new Vue({
+        el: '#studentScore',
+        data() {
+          return {
+              isTransition: false, //是否渲染完成
+              score: 0, //总分
+              startTime: null, //考试开始时间
+              endTime: null, //考试结束时间
+          }
+        },
+        created() {
+            this.transiton()
+            this.getScore(score, startTime, endTime)
+        },
+        methods: {
+            transiton() {  //一秒后过渡
+                setTimeout(() => {
+                    this.isTransition = true
+                    this.imgShow = true
+                },1000)
+            },
+            getScore(score, startTime, endTime) {
+                this.score = score
+                this.startTime = startTime
+                this.endTime = endTime
+            }
+        }
+    })
+</script>
+</body>
+</html>

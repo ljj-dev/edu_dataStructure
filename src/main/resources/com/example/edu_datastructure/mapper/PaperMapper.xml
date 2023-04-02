@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.PaperMapper">
+    <resultMap id="PaperMap" type="com.example.edu_datastructure.pojo.PaperManage">
+        <result property="paperId" column="paper_id"/>
+        <result property="questionId" column="question_id"/>
+        <result property="questionType" column="question_type"/>
+    </resultMap>
+    <insert id="add">
+        insert into paper_manage(paper_id, question_id, question_type)
+        values (#{paperManage.paperId}, #{paperManage.questionId}, #{paperManage.questionType})
+    </insert>
+
+</mapper>

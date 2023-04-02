@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.QJudgmentMapper">
+    <resultMap id="QJudgmentMap" type="com.example.edu_datastructure.pojo.QJudgment">
+        <id property="questionId" column="question_id"/>
+        <result property="question" column="question"/>
+        <result property="answer" column="answer"/>
+        <result property="analysis" column="analysis"/>
+        <result property="score" column="score"/>
+        <result property="chapterId" column="chapter_id"/>
+        <result property="difficultyLevel" column="difficulty_level"/>
+    </resultMap>
+    <insert id="addJudgment">
+        insert into q_judgment
+        values (null, #{qJudgment.question}, #{qJudgment.answer}, #{qJudgment.analysis}, #{qJudgment.score},
+                #{qJudgment.chapterId}, #{qJudgment.difficultyLevel}, 0)
+    </insert>
+    <update id="deleteJudgmentById">
+        update q_judgment
+        set isDelete = 1
+        where question_id = #{questionId}
+    </update>
+    <update id="updateJudgmentById">
+        update q_judgment
+        <set>
+            <if test="qJudgment.question != null and qJudgment.question !=''">
+                question = #{qJudgment.question},
+            </if>
+            <if test="qJudgment.answer != null and qJudgment.answer !=''">
+                answer = #{qJudgment.answer},
+            </if>
+            <if test="qJudgment.analysis != null and qqJudgment.analysis !=''">
+                analysis = #{qJudgment.analysis},
+            </if>
+            <if test="qJudgment.score != null">
+                score = #{qJudgment.score},
+            </if>
+            <if test="qJudgment.chapterId != null">
+                chapter_id = #{qJudgment.chapterId},
+            </if>
+            <if test="qJudgment.difficultyLevel != null">
+                difficulty_level = #{qJudgment.difficultyLevel},
+            </if>
+        </set>
+        where question_id = #{questionId}
+        and isDelete = 0
+    </update>
+    <select id="queryAllJudgment" resultMap="QJudgmentMap">
+        select *
+        from q_judgment
+        where isDelete = 0 limit #{begin}
+            , #{pageSize}
+    </select>
+    <select id="queryJudgmentById" resultMap="QJudgmentMap">
+        select *
+        from q_judgment
+        where question_id = #{questionId}
+          and isDelete = 0
+    </select>
+    <select id="allJudgmentCount" resultType="java.lang.Integer">
+        select count(question_id)
+        from q_judgment
+        where isDelete = 0
+    </select>
+    <select id="queryByRandom" resultType="java.lang.Integer">
+        SELECT
+            question_id
+        FROM
+            q_judgment
+        ORDER BY
+            rand() DESC
+            LIMIT #{judgeNumber}
+    </select>
+    <select id="queryPaperByIdAndType" resultMap="QJudgmentMap">
+        SELECT
+            *
+        FROM
+            q_judgment
+        WHERE
+                question_id IN (
+                SELECT
+                    question_id
+                FROM
+                    paper_manage
+                WHERE
+                    question_type = 2
+                  AND paper_id = #{paperId})
+    </select>
+
+</mapper>

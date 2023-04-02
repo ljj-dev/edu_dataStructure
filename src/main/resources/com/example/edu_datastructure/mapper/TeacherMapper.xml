@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.TeacherMapper">
+    <resultMap id="teacherMap" type="com.example.edu_datastructure.pojo.Teacher">
+        <result property="teacherId" column="teacher_id"/>
+        <result property="teacherName" column="teacher_name"/>
+    </resultMap>
+    <select id="queryTeacherById" resultMap="teacherMap">
+        SELECT
+            *
+        FROM
+            teacher
+        WHERE
+            teacher_id = #{teacherId}
+    </select>
+
+
+</mapper>

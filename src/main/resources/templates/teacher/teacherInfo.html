@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+</head>
+<body>
+<div id="teacherInfo">
+    <el-descriptions class="margin-top" title="个人信息" :column="3" :size="size" border>
+        <template slot="extra">
+            <el-button type="primary" size="small" v-on:click="updateInfo()">修改信息</el-button>
+        </template>
+        <el-descriptions-item>
+            <template slot="label">
+                <i class="el-icon-user"></i>
+                用户名
+            </template>
+            <label th:text="${session.teacher.teacherName}"></label>
+        </el-descriptions-item>
+        <el-descriptions-item>
+            <template slot="label">
+                <i class="el-icon-mobile-phone"></i>
+                手机号
+            </template>
+            18100000000
+        </el-descriptions-item>
+        <el-descriptions-item>
+            <template slot="label">
+                <i class="el-icon-tickets"></i>
+                身份
+            </template>
+            <el-tag size="small">教师</el-tag>
+        </el-descriptions-item>
+    </el-descriptions>
+</div>
+
+
+<script>
+    new Vue({
+        el: '#teacherInfo',
+        data () {
+            return {
+                size: ''
+            };
+        },
+        methods: {
+            updateInfo(){
+
+            },
+        },
+
+    })
+</script>
+</body>
+</html>

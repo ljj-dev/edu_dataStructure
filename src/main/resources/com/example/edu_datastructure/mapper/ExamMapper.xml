@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.ExamMapper">
+    <resultMap id="ExamMap" type="com.example.edu_datastructure.pojo.Exam">
+        <id property="examId" column="exam_id"/>
+        <result property="description" column="description"/>
+        <result property="paperId" column="paper_id"/>
+        <result property="examDate" column="exam_date"/>
+        <result property="totalTime" column="total_time"/>
+        <result property="grade" column="grade"/>
+        <result property="term" column="term"/>
+        <result property="major" column="major"/>
+        <result property="institute" column="institute"/>
+        <result property="totalScore" column="total_score"/>
+        <result property="type" column="type"/>
+        <result property="tips" column="tips"/>
+    </resultMap>
+    <resultMap id="IssueExamMap" type="com.example.edu_datastructure.pojo.ExamIssue">
+        <result property="examId" column="exam_id"/>
+        <result property="classId" column="class_id"/>
+    </resultMap>
+    <insert id="addExam">
+        insert into exam_manage
+        values (null, #{examInfo.description}, #{examInfo.paperId}, #{examInfo.examDate}, #{examInfo.totalTime},
+                #{examInfo.grade}, #{examInfo.term}, #{examInfo.major}, #{examInfo.institute}, #{examInfo.totalTime},
+                #{examInfo.type}, #{examInfo.tips}, 0)
+    </insert>
+    <insert id="issueExamById">
+        insert into exam_issue
+        values (null, #{examId}, #{classId}, 0)
+    </insert>
+    <update id="updateExamById">
+        update exam_manage
+        <set>
+            <if test="updateExamFrom.description != null and updateExamFrom.description !=''">
+                description = #{updateExamFrom.description},
+            </if>
+            <if test="updateExamFrom.paperId != null">
+                paper_id = #{updateExamFrom.paperId},
+            </if>
+            <if test="updateExamFrom.examDate != null and updateExamFrom.examDate !=''">
+                exam_date = #{updateExamFrom.examDate},
+            </if>
+            <if test="updateExamFrom.totalTime != null and updateExamFrom.totalTime !=''">
+                total_time = #{updateExamFrom.totalTime},
+            </if>
+            <if test="updateExamFrom.grade != null and updateExamFrom.grade !=''">
+                grade = #{updateExamFrom.grade},
+            </if>
+            <if test="updateExamFrom.term != null and updateExamFrom.term !=''">
+                term = #{updateExamFrom.term},
+            </if>
+            <if test="updateExamFrom.major != null and updateExamFrom.major !=''">
+                major = #{updateExamFrom.major},
+            </if>
+            <if test="updateExamFrom.institute != null and updateExamFrom.institute !=''">
+                institute = #{updateExamFrom.institute},
+            </if>
+            <if test="updateExamFrom.totalScore != null">
+                total_score = #{updateExamFrom.totalScore},
+            </if>
+            <if test="updateExamFrom.type != null and updateExamFrom.type !=''">
+                `type` = #{updateExamFrom.type},
+            </if>
+            <if test="updateExamFrom.tips != null and updateExamFrom.tips !=''">
+                tips = #{updateExamFrom.tips},
+            </if>
+        </set>
+        where exam_id = #{examId}
+        and isDelete = 0
+    </update>
+    <update id="deleteExamById">
+        update exam_manage
+        set isDelete = 1
+        where exam_id = #{examId}
+    </update>
+    <update id="deleteIssueExamById">
+        update exam_issue
+        set isDelete = 1
+        where exam_id = #{examId} and class_id = #{classId}
+    </update>
+    <select id="queryExam" resultMap="ExamMap">
+        SELECT *
+        FROM exam_manage
+        where isDelete = 0 LIMIT #{begin}
+            , #{pageSize}
+    </select>
+    <select id="allExamCount" resultType="java.lang.Integer">
+        SELECT count(exam_id)
+        FROM exam_manage
+        where isDelete = 0
+    </select>
+    <select id="queryExamById" resultMap="ExamMap">
+        SELECT *
+        FROM exam_manage
+        where exam_id = #{examId}
+          and isDelete = 0
+    </select>
+    <select id="queryIssueExam" resultMap="IssueExamMap">
+        SELECT *
+        FROM exam_issue
+        where isDelete = 0 LIMIT #{begin}
+            , #{pageSize}
+    </select>
+    <select id="allIssueExamCount" resultType="java.lang.Integer">
+        SELECT count(id)
+        FROM exam_issue
+        where isDelete = 0
+    </select>
+
+</mapper>

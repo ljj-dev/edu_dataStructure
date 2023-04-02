@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+</head>
+<body>
+
+<div id="studentMessage">
+    <template>
+        <el-breadcrumb separator-class="el-icon-arrow-right">
+            <el-breadcrumb-item><a href="teacherMain.html" target="mainBody">首页</a></el-breadcrumb-item>
+            <el-breadcrumb-item>基础信息管理</el-breadcrumb-item>
+            <el-breadcrumb-item>学生管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </template>
+    <el-divider></el-divider>
+    <template>
+        <el-table
+                :data="tableData"
+                style="width: 100%"
+                :row-class-name="tableRowClassName"
+                @selection-change="handleSelectionChange">
+            <el-table-column
+                    type="selection"
+                    width="55">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    type="index"
+                    label="序号">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="studentId"
+                    label="学号">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="studentName"
+                    label="姓名">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="studentSex"
+                    label="性别">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="studentGrade"
+                    label="年级">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="classId"
+                    label="班级">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    label="操作"
+                    width="200">
+                <template slot-scope="scope">
+                    <el-button type="primary" round
+                               @click="updateStudentById(scope.row)" size="small">
+                        编辑
+                    </el-button>
+                    <el-button type="danger" round
+                               @click="deleteStudentById(scope.row)" size="small">
+                        删除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </template>
+
+    <!--    分页-->
+    <template>
+        <div class="block" style="position: center;">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[2, 4, 6, 8]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+            </el-pagination>
+        </div>
+    </template>
+
+    <template>
+        <el-dialog title="学生信息" :visible.sync="dialogStudentById">
+            <el-form :model="infoForm">
+                <el-form-item label="姓名" :label-width="formLabelWidth">
+                    <el-input v-model="infoForm.studentName" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="性别" :label-width="formLabelWidth">
+                    <el-input v-model="infoForm.studentSex" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="学号" :label-width="formLabelWidth">
+                    <el-input v-model="infoForm.studentId" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="年级" :label-width="formLabelWidth">
+                    <el-input v-model="infoForm.studentGrade" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="班级" :label-width="formLabelWidth"
+                              :rules="[{required: true, message: '暂未加入班级'}]">
+                    <el-input v-model="infoForm.classId" autocomplete="off" readonly="readonly"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogStudentById = false">取 消</el-button>
+                <el-button type="primary" @click="changeInfo()">修改信息</el-button>
+            </div>
+        </el-dialog>
+    </template>
+</div>
+
+<script>
+    new Vue({
+        el: '#studentMessage',
+        data() {
+            return {
+                tableData: [],
+                //被选中的id数组
+                selectedIds: [],
+                multipleSelection: [],
+                //分页查询 总数
+                totalCount: 50,
+                //每页显示的条数
+                pageSize: 15,
+                //当前的页码
+                currentPage: 1,
+
+                studentData: [],
+
+                dialogStudentById: false,
+                formLabelWidth: '100px',
+                infoForm: {
+                    studentName: '',
+                    classId: '',
+                    studentSex: '',
+                    studentGrade: '',
+                    studentId: '',
+                },
+
+            };
+        },
+        methods: {
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex === 1) {
+                    return 'warning-row';
+                } else if (rowIndex === 3) {
+                    return 'success-row';
+                }
+                return '';
+            },
+            //复选框选中后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                console.log(this.multipleSelection)
+            },
+
+            //分页相关函数
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                //重新设置每页的条数
+                this.pageSize = val;
+                this.queryAllStudent();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                //重新设置当前页码
+                this.currentPage = val;
+                this.queryAllStudent();
+            },
+
+            //查询所有学生
+            queryAllStudent() {
+                //分页查询  查询一页的数据
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/teacher/queryAllStudent?currentPage=" + _this.currentPage + "&pageSize=" + _this.pageSize,
+                }).then(function (resp) {
+                    //获取每一页的数据
+                    _this.tableData = resp.data.data.rows;
+
+                    //设置总记录数
+                    _this.totalCount = resp.data.data.totalCount;
+                    // console.log(_this.tableData);
+                });
+            },
+
+            //编辑学生
+            updateStudentById(row) {
+                console.log(row.studentId);
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/teacher/queryStudentById?studentId=" + row.studentId,
+                }).then(function (resp) {
+                    _this.infoForm = resp.data.data;
+                    _this.dialogStudentById = true;
+                });
+            },
+            //修改
+            changeInfo() {
+                this.$confirm('确定修改个人信息', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/teacher/updateStudentById",
+                        data: _this.infoForm,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.$message({
+                                type: 'success',
+                                message: '修改成功!'
+                            });
+                        } else {
+                            _this.$message({
+                                type: 'warning',
+                                message: '修改失败!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+            //删除学生
+            deleteStudentById(row) {
+                console.log(row.studentId);
+                this.$confirm('确定删除', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    //页面加载完成之后，发送Ajax请求
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/teacher/deleteStudentById?studentId=" + row.studentId,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.queryAllStudent();
+                            _this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+        },
+        mounted() {
+            this.queryAllStudent();
+        }
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <script src="../js/jquery.js" charset="utf-8"></script>
+    <script src="../js/dist/js/bootstrap.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../js/dist/css/bootstrap.css"/>
+</head>
+<body>
+<div id="myData">
+    <!--    <template>-->
+    <!--        <el-form :inline="true" class="demo-form-inline">-->
+    <!--            <el-form-item>-->
+    <!--                <el-button type="primary" @click="queryAllProblem()">所有题目</el-button>-->
+    <!--                <el-button type="primary" @click="myProblem()">我做过的题目</el-button>-->
+    <!--            </el-form-item>-->
+    <!--        </el-form>-->
+    <!--    </template>-->
+
+    <!--        表格-->
+    <template>
+        <el-table
+                :data="tableData"
+                style="width: 100%"
+                :row-class-name="tableRowClassName"
+                @selection-change="handleSelectionChange">
+            <el-table-column
+                    type="selection"
+                    width="55">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    type="index"
+                    label="序号">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="id"
+                    v-if="false"
+                    label="id">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="fileName"
+                    label="文件名">
+            </el-table-column>
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    label="操作"
+                    width="200">
+                <template slot-scope="scope2">
+                    <el-button type="danger" round
+                               @click="upLoadFiles(scope2.row)" size="small">
+                        下载
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </template>
+
+
+    <!--    分页-->
+    <template>
+        <div class="block" style="position: center;">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[2, 4, 6, 8]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+            </el-pagination>
+        </div>
+    </template>
+</div>
+
+
+<script>
+    new Vue({
+        el: '#myData',
+        data() {
+            return {
+                tableData: [],
+                //被选中的id数组
+                selectedIds: [],
+                multipleSelection: [],
+                //分页查询 总数
+                totalCount: 50,
+                //每页显示的条数
+                pageSize: 15,
+                //当前的页码
+                currentPage: 1,
+
+            }
+
+        },
+        methods: {
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex === 1) {
+                    return 'warning-row';
+                } else if (rowIndex === 3) {
+                    return 'success-row';
+                }
+                return '';
+            },
+            //复选框选中后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                console.log(this.multipleSelection)
+            },
+
+            //分页相关函数
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                //重新设置每页的条数
+                this.pageSize = val;
+                this.queryAllData();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                //重新设置当前页码
+                this.currentPage = val;
+                this.queryAllData();
+            },
+            queryAllData() {
+                //分页查询  查询一页的数据
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/queryAllData?currentPage=" + _this.currentPage + "&pageSize=" + _this.pageSize,
+                }).then(function (resp) {
+                    //获取每一页的数据
+                    _this.tableData = resp.data.data.rows;
+                    //设置总记录数
+                    _this.totalCount = resp.data.data.totalCount;
+                    // console.log(_this.tableData);
+                });
+            },
+            upLoadFiles(row) {
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "get",
+                    url: "http://localhost:8080/fileApi/download?id="+row.id,
+                }).then(function (resp) {
+                });
+            },
+        },
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.ChapterMapper">
+    <resultMap id="ChapterAndSectionMap" type="com.example.edu_datastructure.pojo.Chapter">
+        <result property="chapterId" column="chapter_id"/>
+        <result property="sectionNum" column="section_num"/>
+        <result property="chapterName" column="chapter_name"/>
+        <!-- 一对多级联查询，ofType表示集合中的元素类型 -->
+        <collection property="sectionList"
+                    ofType="com.example.edu_datastructure.pojo.Section">
+            <result property="sectionId" column="section_id"/>
+            <result property="sectionUrl" column="section_url"/>
+            <result property="sectionName" column="section_name"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="ChapterMap" type="com.example.edu_datastructure.pojo.Chapter">
+        <result property="chapterId" column="chapter_id"/>
+        <result property="sectionNum" column="section_num"/>
+        <result property="chapterName" column="chapter_name"/>
+    </resultMap>
+    <insert id="addChapter">
+        insert into chapter_manage values (null, #{addChapterInfo.chapterId}, #{addChapterInfo.chapterName}, #{addChapterInfo.sectionNum}, 0)
+    </insert>
+    <update id="deleteChapterById">
+        UPDATE chapter_manage
+        SET isDelete = 1
+        WHERE
+            chapter_id = #{chapterId}
+    </update>
+    <update id="deleteByIds">
+        UPDATE chapter_manage
+        SET isDelete = 1
+        where chapter_id in
+        <foreach collection="selectedIds" item="id" separator="," open="(" close=")">
+            #{selectedIds}
+        </foreach>
+    </update>
+    <select id="queryAllSection" resultMap="ChapterAndSectionMap">
+        SELECT section_id,
+               section_name,
+               section_url,
+               section_num,
+               chapter_name,
+               chapter_manage.chapter_id
+        FROM section,
+             chapter_manage
+        WHERE section.chapter_id = chapter_manage.chapter_id
+    </select>
+    <select id="queryAllChapter" resultMap="ChapterMap">
+        SELECT chapter_id,
+               chapter_name,
+               section_num
+        FROM chapter_manage
+        WHERE isDelete = 0 limit #{begin}
+            , #{pageSize}
+    </select>
+    <select id="allChapterCount" resultType="java.lang.Integer">
+        SELECT count(chapter_id)
+        FROM chapter_manage
+    </select>
+
+</mapper>

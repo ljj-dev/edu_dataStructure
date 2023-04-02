@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+</head>
+<body>
+<div id="classMessage">
+    <template>
+        <el-breadcrumb separator-class="el-icon-arrow-right">
+            <el-breadcrumb-item><a href="teacherMain.html" target="mainBody">首页</a></el-breadcrumb-item>
+            <el-breadcrumb-item>基础信息管理</el-breadcrumb-item>
+            <el-breadcrumb-item>班级管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </template>
+    <el-divider></el-divider>
+    <template>
+        <!--    添加班级按钮-->
+        <el-button type="primary" round @click="addClass">添加班级</el-button>
+        <el-dialog title="添加班级" :visible.sync="dialogAddClassFormVisible">
+            <el-form :model="addClassInfo" ref="addClassInfo">
+                <el-form-item label="班级编号" prop="classId" :rules="[
+                    { required: true, message: '请输入班级编号'}]">
+                    <el-input type="text" v-model="addClassInfo.classId"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="cancelAddClass()">取 消</el-button>
+                <el-button type="primary" @click="addClassInsure('addClassInfo')">确 定</el-button>
+                <el-button @click="resetForm('addClassInfo')">重置</el-button>
+            </div>
+        </el-dialog>
+
+        <!--    批量删除按钮-->
+        <el-button type="danger" round @click="deleteByIds">批量删除</el-button>
+    </template>
+
+    <template>
+        <el-table
+                :data="tableData"
+                style="width: 100%"
+                :row-class-name="tableRowClassName"
+                @selection-change="handleSelectionChange">
+            <el-table-column
+                    type="selection"
+                    width="55">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    type="index"
+                    label="序号">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="classId"
+                    label="班级号">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    prop="number"
+                    label="班级人数">
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    label="操作"
+                    width="200">
+                <template slot-scope="scope">
+                    <el-button type="primary" round
+                               @click="queryStudentByClassId(scope.row)" size="small">
+                        查看学生
+                    </el-button>
+                    <el-button type="danger" round
+                               @click="deleteClassById(scope.row)" size="small">
+                        删除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </template>
+
+    <!--    分页-->
+    <template>
+        <div class="block">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[2, 4, 6, 8]"
+                    :page-size="100"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+            </el-pagination>
+        </div>
+    </template>
+
+    <template>
+        <el-dialog title="班级学生" :visible.sync="dialogStudent">
+            <el-table :data="studentData" height="250"
+                      border>
+                <el-table-column property="studentId" label="学号"></el-table-column>
+                <el-table-column property="studentName" label="姓名"></el-table-column>
+                <el-table-column property="studentSex" label="性别"></el-table-column>
+                <el-table-column property="studentGrade" label="年级"></el-table-column>
+                <el-table-column
+                        align="center"
+                        label="操作"
+                        width="200">
+                    <template slot-scope="scope">
+                        <el-button type="danger" round
+                                   @click="deleteStudentToClassById(scope.row)" size="small">
+                            移出班级
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+        </el-dialog>
+    </template>
+</div>
+
+<script>
+    new Vue({
+        el: '#classMessage',
+        data() {
+            return {
+                tableData: [],
+                //被选中的id数组
+                selectedIds: [],
+                multipleSelection: [],
+                //分页查询 总数
+                totalCount: 50,
+                //每页显示的条数
+                pageSize: 15,
+                //当前的页码
+                currentPage: 1,
+
+                studentData: [],
+
+                dialogStudent: false,
+
+                dialogAddClassFormVisible: false,
+
+                addClassInfo:{
+                    classId: '',
+                },
+
+            };
+        },
+        methods: {
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex === 1) {
+                    return 'warning-row';
+                } else if (rowIndex === 3) {
+                    return 'success-row';
+                }
+                return '';
+            },
+            //复选框选中后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                console.log(this.multipleSelection)
+            },
+
+            //分页相关函数
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                //重新设置每页的条数
+                this.pageSize = val;
+                this.queryAllClass();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                //重新设置当前页码
+                this.currentPage = val;
+                this.queryAllClass();
+            },
+
+            //批量删除班级
+            deleteByIds(){
+                if (this.multipleSelection.length <= 0) {
+                    this.$message({
+                        message: '未选择删除的选项',
+                        type: 'warning'
+                    });
+                } else {
+                    //1.创建id数组 从this.multipleSelection获取即可
+                    for (let i = 0; i < this.multipleSelection.length; i++) {
+                        let selectedElement = this.multipleSelection[i];
+                        this.selectedIds[i] = selectedElement.classId;
+                    }
+                    console.log(this.selectedIds);
+
+                    this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        //发送ajax请求
+                        var _this = this;
+                        //发送ajax请求
+                        axios({
+                            method: "post",
+                            url: "http://localhost:8080/teacher/deleteByClassIds",
+                            data: _this.selectedIds
+                        }).then(function (resp) {
+                            //判断响应数据是否为success
+                            if (resp.data == "success") {
+                                _this.queryAllChapter();
+                                _this.selectedIds = null;
+                                //删除成功提示
+                                _this.$message({
+                                    message: '恭喜你，删除成功',
+                                    type: 'success'
+                                });
+                            } else {
+                                //删除错误提示
+                                _this.$message.error('请选择删除的数据');
+                            }
+                        });
+                    }).catch(() => {
+                        this.$message({
+                            type: 'info',
+                            message: '已取消删除'
+                        });
+                    });
+                }
+            },
+
+            //添加班级
+            addClass(){
+                this.dialogAddClassFormVisible = true;
+            },
+            addClassInsure(addClassInfo) {
+                console.log(this.addClassInfo);
+                this.$nextTick(() => {
+                    this.$refs.addClassInfo.validate((valid) => {
+                        if (valid) {
+                            var _this = this;
+                            //发送ajax请求
+                            axios.post("http://localhost:8080/teacher/addClass", _this.addClassInfo).then((resp) => {
+                                //判断响应数据是否为success
+                                if (resp.data == "success") {
+                                    _this.queryAllClass();
+                                    //成功提示
+                                    _this.$message({
+                                        message: '恭喜你，添加班级成功',
+                                        type: 'success'
+                                    });
+                                    _this.dialogAddClassFormVisible = false;
+                                    _this.addClassInfo.classId = "";
+                                } else {
+                                    _this.queryAllClass();
+                                    _this.$message({
+                                        message: '添加班级失败',
+                                        type: 'warning'
+                                    });
+                                }
+                            });
+                        } else {
+                            console.log('error submit!!');
+                            return false;
+                        }
+                    });
+                });
+            },
+            //取消添加班级
+            cancelAddClass() {
+                this.dialogAddClassFormVisible = false;
+                this.addClassInfo.classId = "";
+                this.$refs.addClassInfo.resetFields();
+                this.$message({
+                    message: '已取消添加班级',
+                    type: 'info'
+                });
+            },
+            resetForm(addClassInfo) {
+                this.$refs.addClassInfo.resetFields();
+            },
+
+            //查询所有班级
+            queryAllClass() {
+                //分页查询  查询一页的数据
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/teacher/queryAllClass?currentPage=" + _this.currentPage + "&pageSize=" + _this.pageSize,
+                }).then(function (resp) {
+                    //获取每一页的数据
+                    _this.tableData = resp.data.data.rows;
+
+                    //设置总记录数
+                    _this.totalCount = resp.data.data.totalCount;
+                    // console.log(_this.tableData);
+                });
+
+            },
+
+            //查看该班级里的学生
+            queryStudentByClassId(row) {
+                console.log(row.classId);
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/teacher/queryStudentByClassId?classId=" + row.classId,
+                }).then(function (resp) {
+                    _this.studentData = resp.data.data;
+                    _this.dialogStudent = true;
+                });
+            },
+
+            //删除班级
+            deleteClassById(row) {
+                console.log(row.classId);
+                this.$confirm('确定删除', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    //页面加载完成之后，发送Ajax请求
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/teacher/deleteClassById?classId=" + row.classId,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.queryAllClass();
+                            _this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+            //移除学生
+            deleteStudentToClassById(row){
+                console.log(row.studentId);
+                this.$confirm('确定移除', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    var _this = this;
+                    //页面加载完成之后，发送Ajax请求
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/teacher/deleteStudentToClassById?studentId=" + row.studentId,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            _this.queryStudentByClassId();
+                            _this.$message({
+                                type: 'success',
+                                message: '移除成功!'
+                            });
+                        }
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            },
+
+        },
+        mounted() {
+            this.queryAllClass();
+        }
+
+    })
+</script>
+</body>
+</html>

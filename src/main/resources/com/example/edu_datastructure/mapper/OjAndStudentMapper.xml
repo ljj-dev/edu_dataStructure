@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.edu_datastructure.mapper.OjAndStudentMapper">
+    <resultMap id="OjProblemAndStudentMap" type="com.example.edu_datastructure.pojo.OjAndStudent">
+        <result property="status" column="status"/>
+        <result property="codeLog" column="code_log"/>
+        <result property="problemId" column="problem_id"/>
+        <result property="templateCode" column="template_code"/>
+        <result property="testCode" column="test_code"/>
+        <result property="description" column="description"/>
+        <result property="level" column="level"/>
+        <result property="title" column="title"/>
+        <collection property="student" ofType="com.example.edu_datastructure.pojo.Student">
+            <result property="studentId" column="student_id"/>
+        </collection>
+    </resultMap>
+    <insert id="saveMyProblem">
+        insert into oj_and_student value (null, #{studentId}, #{problemId}, #{status}, #{codeLog})
+    </insert>
+
+    <update id="updateCodeLog">
+        UPDATE oj_and_student
+        <set>
+            <if test="codeLog!=''and codeLog!=null">
+                code_log = #{codeLog},
+            </if>
+            <if test="status!=null">
+                status = #{status},
+            </if>
+        </set>
+        WHERE problem_id = #{problemId}
+          and student_id = #{studentId}
+    </update>
+
+    <select id="queryMyOjProblem" resultMap="OjProblemAndStudentMap">
+        SELECT oj_problem.problem_id,
+               title,
+               `level`,
+               description,
+               template_code,
+               test_code,
+               `status`,
+               code_log
+        FROM oj_problem
+                 JOIN oj_and_student ON oj_problem.problem_id = oj_and_student.problem_id
+        WHERE student_id = #{studentId} limit #{begin}
+            , #{pageSize}
+    </select>
+    <select id="myOjProblemCount" resultType="java.lang.Integer">
+        SELECT count(problem_id)
+        FROM oj_and_student
+        WHERE student_id = #{studentId}
+    </select>
+    <select id="queryCodeLog" resultType="java.lang.String">
+        SELECT code_log
+        FROM oj_and_student
+        WHERE problem_id = #{problemId}
+          and student_id = #{studentId}
+    </select>
+    <select id="myOjproblemExist" resultType="java.lang.Integer">
+        SELECT count(problem_id)
+        FROM oj_and_student
+        WHERE problem_id = #{problemId}
+          and student_id = #{studentId}
+    </select>
+
+</mapper>

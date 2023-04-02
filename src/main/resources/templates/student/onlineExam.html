@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../resources/favicon.ico" th:href="@{/static/favicon.ico}"/>
+    <script src="../js/axios.js"></script>
+    <script src="../js/vue.js" charset="utf-8"></script>
+    <script src="../js/lib-master/index.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="../js/lib-master/theme-chalk/index.css"/>
+    <link rel="stylesheet" href="../css/onlineExam.css"/>
+</head>
+<body>
+<div id="onlineExam">
+    <template>
+        <div id="myExam">
+            <div class="title">我的试卷</div>
+            <div class="wrapper">
+                <ul class="top">
+                    <li class="order">试卷列表</li>
+<!--                    <li class="search-li"><div class="icon"><input type="text" placeholder="试卷名称" class="search" v-model="key"><i class="el-icon-search"></i></div></li>-->
+<!--                    <li><el-button type="primary" @click="search()">搜索试卷</el-button></li>-->
+                </ul>
+                <ul class="paper" v-loading="loading">
+                    <li class="item" v-for="(item,index) in pagination" :key="index">
+                        <h4 @click="toExamMsg(item.examId)">数据结构</h4>
+                        <p class="name">数据结构-{{item.description}}</p>
+                        <div class="info">
+                            <i class="el-icon-loading"></i><span>{{item.examDate.substr(0,10)}}</span>
+                            <i class="iconfont icon-icon-time"></i><span v-if="item.totalTime != null">限时{{item.totalTime}}分钟</span>
+                            <i class="iconfont icon-fenshu"></i><span>满分{{item.totalScore}}分</span>
+                        </div>
+                    </li>
+                </ul>
+                <!--    分页-->
+                <template>
+                    <div class="block" style="position: center;">
+                        <el-pagination
+                                @size-change="handleSizeChange"
+                                @current-change="handleCurrentChange"
+                                :current-page="currentPage"
+                                :page-sizes="[2, 4, 6, 8]"
+                                :page-size="100"
+                                layout="total, sizes, prev, pager, next, jumper"
+                                :total="totalCount">
+                        </el-pagination>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+    new Vue({
+        el: '#onlineExam',
+        data() {
+            return {
+                loading: false,
+                key: null, //搜索关键字
+                allExam: null, //所有考试信息
+                //分页查询 总数
+                totalCount: 50,
+                //每页显示的条数
+                pageSize: 15,
+                //当前的页码
+                currentPage: 1,
+
+                pagination: { //考试信息
+                    examId: '',
+                    description: '',
+                    paperId: '',
+                    examDate: '',
+                    totalTime: '',
+                    grade: '',
+                    term: '',
+                    major: '',
+                    institute: '',
+                    totalScore: '',
+                    type: '',
+                    tips: '',
+                }
+            }
+        },
+        methods: {
+            //分页相关函数
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                //重新设置每页的条数
+                this.pageSize = val;
+                this.queryExamInfo();
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                //重新设置当前页码
+                this.currentPage = val;
+                this.queryExamInfo();
+            },
+
+
+            //获取当前所有考试信息
+            queryExamInfo() {
+                //分页查询  查询一页的数据
+                var _this = this;
+                //页面加载完成之后，发送Ajax请求
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/exam/queryExam?currentPage=" + _this.currentPage + "&pageSize=" + _this.pageSize,
+                }).then(function (resp) {
+                    //获取每一页的数据
+                    _this.pagination = resp.data.data.rows;
+                    _this.loading = false;
+                    //设置总记录数
+                    _this.totalCount = resp.data.data.totalCount;
+                    // console.log(_this.tableData);
+                });
+            },
+
+            //跳转到试卷详情页
+            toExamMsg(examId) {
+                console.log(examId)
+                let params = {
+                    "examId": examId,
+                };
+                window["filter"] = params;
+                window.open("../student/onlineExamMsg.html");
+            }
+        },
+        created() {
+            this.queryExamInfo()
+            this.loading = true
+        },
+    })
+</script>
+
+</body>
+</html>
